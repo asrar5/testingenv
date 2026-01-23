@@ -7,8 +7,16 @@ on:
 jobs:
   deploy:
     name: Deploy to Server
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
+      - name: Fix Workspace Permissions
+        run: |
+          echo "Fixing permissions on workspace..."
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+             sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+          fi
+        continue-on-error: true
+
       - name: Checkout code
         uses: actions/checkout@v4
 
