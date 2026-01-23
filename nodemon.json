@@ -1,0 +1,7 @@
+{
+    "ignore": [
+        "data/*",
+        "builds/*",
+        "server.log"
+    ]
+}

@@ -1,0 +1,22 @@
+{
+  "admin": {
+    "password": "admin123",
+    "role": "admin"
+  },
+  "asrar": {
+    "password": "dev123",
+    "role": "developer"
+  },
+  "Yasir": {
+    "password": "dev123",
+    "role": "developer"
+  },
+  "Daniyal Bhai": {
+    "password": "dev123",
+    "role": "developer"
+  },
+  "Umer Bhai": {
+    "password": "dev123",
+    "role": "developer"
+  }
+}
