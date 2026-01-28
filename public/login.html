@@ -81,7 +81,7 @@
 
         .shell {
             width: 100%;
-            max-width: 460px;
+            max-width: 920px;
             position: relative;
             z-index: 1;
         }
@@ -89,10 +89,11 @@
         .card {
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 28px 26px 22px;
+            padding: 0;
             background: rgba(255, 255, 255, 0.92);
             box-shadow: 0 20px 45px rgba(17, 24, 39, 0.10);
             position: relative;
+            overflow: hidden;
         }
 
         @supports (backdrop-filter: blur(10px)) {
@@ -104,6 +105,75 @@
         .card>* {
             position: relative;
             z-index: 1;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: 0.95fr 1.05fr;
+            min-height: 460px;
+        }
+
+        .card-aside {
+            padding: 34px 30px;
+            background:
+                radial-gradient(800px 520px at 20% 20%, rgba(79, 70, 229, 0.22), transparent 62%),
+                radial-gradient(700px 520px at 80% 78%, rgba(14, 165, 233, 0.18), transparent 64%),
+                linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(255, 255, 255, 0.92) 100%);
+            border-right: 1px solid rgba(17, 24, 39, 0.08);
+        }
+
+        .aside-title {
+            margin-top: 18px;
+            font-size: 1.8rem;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+
+        .aside-subtitle {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.98rem;
+        }
+
+        .aside-points {
+            margin-top: 18px;
+            display: grid;
+            gap: 10px;
+            color: rgba(17, 24, 39, 0.78);
+            font-size: 0.9rem;
+        }
+
+        .aside-point {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .aside-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(79, 70, 229, 0.25);
+            border: 1px solid rgba(79, 70, 229, 0.35);
+            margin-top: 5px;
+            flex: 0 0 auto;
+        }
+
+        .card-form {
+            padding: 34px 30px 26px;
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .form-title {
+            font-size: 1.35rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .form-subtitle {
+            color: var(--muted);
+            margin-bottom: 16px;
+            font-size: 0.92rem;
         }
 
         .brand {
@@ -147,17 +217,6 @@
 
         .headline {
             margin: 10px 0 18px;
-        }
-
-        .headline h1 {
-            font-size: 1.55rem;
-            letter-spacing: -0.03em;
-            margin-bottom: 6px;
-        }
-
-        .headline p {
-            color: var(--muted);
-            font-size: 0.92rem;
         }
 
         .error {
@@ -317,9 +376,31 @@
             color: var(--muted);
         }
 
+        .fineprint-inline {
+            margin-top: 16px;
+            text-align: left;
+        }
+
+        @media (max-width: 860px) {
+            .shell {
+                max-width: 560px;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+                min-height: unset;
+            }
+
+            .card-aside {
+                border-right: none;
+                border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+            }
+        }
+
         @media (max-width: 420px) {
-            .card {
-                padding: 24px 18px 18px;
+            .card-aside,
+            .card-form {
+                padding: 24px 18px;
             }
         }
     </style>
@@ -329,68 +410,81 @@
     
     <main class="shell">
         <section class="card" aria-label="Sign in">
-            <div class="brand">
-                <div class="mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                </div>
-                <div class="brand-title">
-                    <strong>Testing Environment</strong>
-                    <span>Secure access portal</span>
-                </div>
-            </div>
-
-            <div class="headline">
-                <h1>Welcome back</h1>
-                <p>Sign in to continue to your dashboard.</p>
-            </div>
-
-            <div id="errorMsg" class="error" role="alert" aria-live="polite">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 8v5"></path>
-                    <path d="M12 16h.01"></path>
-                </svg>
-                <span>Invalid username or password</span>
-            </div>
-
-            <form id="loginForm">
-                <div>
-                    <label for="username">Username</label>
-                    <div class="field">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+            <div class="card-grid">
+                <aside class="card-aside">
+                    <div class="brand">
+                        <div class="mark" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <div class="brand-title">
+                            <strong>Testing Environment</strong>
+                            <span>Secure access portal</span>
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <label for="password">Password</label>
-                    <div class="field">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
-                        <button type="button" id="pwToggle" class="pw-toggle" aria-label="Show password">Show</button>
+                    <h1 class="aside-title">Deploy, manage, and monitor in one place.</h1>
+                    <p class="aside-subtitle">Sign in to access your dashboard, deployments, and activity logs.</p>
+
+                    <div class="aside-points" aria-hidden="true">
+                        <div class="aside-point"><span class="aside-dot"></span><span>Fast deploys for ZIP builds and Docker images</span></div>
+                        <div class="aside-point"><span class="aside-dot"></span><span>Clear activity logs with filters and search</span></div>
+                        <div class="aside-point"><span class="aside-dot"></span><span>Admin view to manage teams and environments</span></div>
                     </div>
-                </div>
+                </aside>
 
-                <div class="actions">
-                    <button type="submit" id="submitBtn">
-                        <span>Sign In</span>
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M5 12h14"></path>
-                            <path d="M12 5l7 7-7 7"></path>
+                <div class="card-form">
+                    <div class="form-title">Welcome back</div>
+                    <div class="form-subtitle">Sign in to continue to your dashboard.</div>
+
+                    <div id="errorMsg" class="error" role="alert" aria-live="polite">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 8v5"></path>
+                            <path d="M12 16h.01"></path>
                         </svg>
-                    </button>
-                </div>
-            </form>
+                        <span>Invalid username or password</span>
+                    </div>
 
-            <div class="fineprint">&copy; 2026 Build Hosting Platform</div>
+                    <form id="loginForm">
+                        <div>
+                            <label for="username">Username</label>
+                            <div class="field">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="password">Password</label>
+                            <div class="field">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                                <button type="button" id="pwToggle" class="pw-toggle" aria-label="Show password">Show</button>
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <button type="submit" id="submitBtn">
+                                <span>Sign In</span>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M5 12h14"></path>
+                                    <path d="M12 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="fineprint fineprint-inline">&copy; 2026 Build Hosting Platform</div>
+                </div>
+            </div>
         </section>
     </main>
 
