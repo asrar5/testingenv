@@ -58,6 +58,27 @@
             mask-image: radial-gradient(circle at 50% 15%, black 0%, transparent 70%);
         }
 
+        /* Responsive shell */
+        @media (max-width: 900px) {
+            .container {
+                padding: 2.25rem 1rem;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            h1 {
+                font-size: 2.1rem;
+            }
+
+            .tabs {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+        }
+
         .container {
             width: 100%;
             max-width: 1100px;
@@ -75,6 +96,12 @@
             justify-content: space-between;
             align-items: center;
             gap: 1rem;
+            position: relative;
+        }
+
+        .header-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
 
         h1 {
@@ -412,20 +439,174 @@
             border: 1px solid #fecaca;
         }
 
+        /* Dashboard layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .dashboard-main {
+            min-width: 0;
+        }
+
+        .dashboard-side {
+            min-width: 0;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* History */
-        .history-item {
-            font-size: 0.85rem;
-            padding: 1rem;
+        .history-card {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .history-card-header {
+            padding: 1.1rem 1.25rem;
             border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 1rem;
+            background: linear-gradient(180deg, rgba(241, 245, 249, 0.75) 0%, rgba(255, 255, 255, 0) 100%);
+        }
+
+        .history-card-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .history-card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .history-list {
+            max-height: 520px;
+            overflow: auto;
+        }
+
+        @media (max-width: 900px) {
+            .history-list {
+                max-height: 420px;
+            }
+        }
+
+        .history-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            align-items: start;
+            font-size: 0.88rem;
         }
 
         .history-item:last-child {
             border-bottom: none;
         }
 
+        .history-main {
+            min-width: 0;
+        }
+
+        .history-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .history-action {
+            font-weight: 800;
+            text-transform: capitalize;
+            letter-spacing: -0.01em;
+        }
+
+        .history-app {
+            font-weight: 700;
+            color: var(--text-main);
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-meta {
+            margin-top: 0.35rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
         .history-time {
             color: var(--text-muted);
             font-size: 0.75rem;
+            white-space: nowrap;
+            text-align: right;
+            padding-top: 0.15rem;
+        }
+
+        .history-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.22rem 0.55rem;
+            font-size: 0.72rem;
+            font-weight: 800;
+            border: 1px solid var(--border);
+            background: rgba(241, 245, 249, 0.9);
+            color: var(--text-muted);
+        }
+
+        .history-badge.upload {
+            background: rgba(79, 70, 229, 0.09);
+            color: #3730a3;
+            border-color: rgba(79, 70, 229, 0.20);
+        }
+
+        .history-badge.delete {
+            background: rgba(239, 68, 68, 0.10);
+            color: #991b1b;
+            border-color: rgba(239, 68, 68, 0.22);
+        }
+
+        .history-badge.docker {
+            background: rgba(14, 165, 233, 0.10);
+            color: #075985;
+            border-color: rgba(14, 165, 233, 0.22);
+        }
+
+        @media (max-width: 560px) {
+            .history-item {
+                grid-template-columns: 1fr;
+            }
+
+            .history-time {
+                text-align: left;
+            }
+        }
+
+        /* Small layout fixes for inline grids */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 720px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -435,9 +616,7 @@
         <header>
             <h1>Testing Env</h1>
             <div id="userInfo" class="user-pill"></div>
-            <div style="font-size: 0.7rem; color: #666; position: absolute; top: 10px; right: 10px;">
-                Updated: <span id="cacheVersion"></span>
-            </div>
+            <div class="header-meta">Updated: <span id="cacheVersion"></span></div>
         </header>
 
         <div class="card upload-card">
@@ -499,7 +678,7 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="two-col">
                         <div class="form-group">
                             <label for="dockerCategory">Category</label>
                             <select id="dockerCategory" name="category">
@@ -533,17 +712,28 @@
                 <div id="breadcrumbs" style="display: none; font-size: 0.9rem; color: var(--text-muted);"></div>
             </div>
 
-            <div id="viewContainer">
-                <div id="appsList" class="card" style="padding: 0;">
-                    <div style="padding: 3rem; text-align: center; color: var(--text-muted)">Initialising...</div>
+            <div class="dashboard-layout">
+                <div class="dashboard-main">
+                    <div id="viewContainer">
+                        <div id="appsList" class="card" style="padding: 0;">
+                            <div style="padding: 3rem; text-align: center; color: var(--text-muted)">Initialising...</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="historySection" style="display: none; margin-top: 4rem;">
-                <h2 style="margin-bottom: 2rem; font-size: 1.5rem; font-weight: 800;">Activity Logs</h2>
-                <div id="historyList" class="card" style="padding: 0;">
-                    <div style="padding: 2rem; text-align: center; color: var(--text-muted)">No activity yet.</div>
-                </div>
+                <aside class="dashboard-side">
+                    <div id="historySection" style="display: none;">
+                        <div class="card history-card">
+                            <div class="history-card-header">
+                                <h2 class="history-card-title">Activity Logs</h2>
+                                <div class="history-card-subtitle" id="historyMeta">Latest events</div>
+                            </div>
+                            <div id="historyList" class="history-list">
+                                <div style="padding: 2rem; text-align: center; color: var(--text-muted)">No activity yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </div>
     </div>
@@ -964,30 +1154,39 @@
 
         function renderHistory(history) {
             const list = document.getElementById('historyList');
+            const meta = document.getElementById('historyMeta');
             if (history.length === 0) {
-                list.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748b">No history recorded</div>';
+                if (meta) meta.textContent = 'No events yet';
+                list.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted)">No history recorded</div>';
                 return;
             }
 
+            if (meta) meta.textContent = `${history.length} event${history.length === 1 ? '' : 's'}`;
+
             list.innerHTML = history.map(item => {
-                const action = (item.action || (item.deletedAt ? 'delete' : 'upload')).replace('_', ' ');
+                const rawAction = (item.action || (item.deletedAt ? 'delete' : 'upload'));
+                const action = rawAction.replaceAll('_', ' ');
                 const owner = item.owner || 'unknown';
                 const appName = item.appName || 'Unknown App';
                 const timestamp = item.timestamp || item.deletedAt || item.deployedAt;
 
+                const badgeClass = rawAction.includes('docker') ? 'docker' : (rawAction.includes('delete') ? 'delete' : (rawAction.includes('upload') ? 'upload' : ''));
+                const badgeLabel = rawAction.includes('docker') ? 'docker' : (rawAction.includes('delete') ? 'delete' : (rawAction.includes('upload') ? 'upload' : rawAction));
+
                 return `
                 <div class="history-item">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="font-weight: 700; color: var(--text-main); text-transform: capitalize;">${action}</span>
-                            <span style="color: var(--text-muted); margin: 0 0.5rem;">•</span>
-                            <span style="font-weight: 500;">${appName}</span>
+                    <div class="history-main">
+                        <div class="history-title">
+                            <span class="history-badge ${badgeClass}">${badgeLabel}</span>
+                            <span class="history-action">${action}</span>
+                            <span style="color: var(--text-muted);">•</span>
+                            <span class="history-app" title="${appName}">${appName}</span>
                         </div>
-                        <div class="history-time">${timestamp ? new Date(timestamp).toLocaleString() : 'N/A'}</div>
+                        <div class="history-meta">
+                            Performed by <b>${owner}</b>${item.port ? ` • Port <b>${item.port}</b>` : ''}${item.image ? ` • Image <b>${item.image}</b>` : ''}${item.category ? ` • ${item.category}</b>` : ''}
+                        </div>
                     </div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
-                        Performed by <b>${owner}</b> ${item.port ? `on port <b>${item.port}</b>` : ''}
-                    </div>
+                    <div class="history-time">${timestamp ? new Date(timestamp).toLocaleString() : 'N/A'}</div>
                 </div>
             `}).join('');
         }
