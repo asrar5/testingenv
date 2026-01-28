@@ -258,7 +258,8 @@
             margin-top: 6px;
         }
 
-        button {
+        /* Primary action button (scoped so it doesn't affect pw toggle) */
+        #submitBtn {
             width: 100%;
             border: none;
             border-radius: 12px;
@@ -276,18 +277,18 @@
             transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
         }
 
-        button:hover {
+        #submitBtn:hover {
             transform: translateY(-1px);
             filter: brightness(1.02);
             box-shadow: 0 12px 30px rgba(79, 70, 229, 0.22);
         }
 
-        button:active {
+        #submitBtn:active {
             transform: translateY(0px);
             filter: brightness(0.99);
         }
 
-        button:disabled {
+        #submitBtn:disabled {
             opacity: 0.75;
             cursor: not-allowed;
             transform: none;
