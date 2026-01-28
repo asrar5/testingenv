@@ -257,30 +257,74 @@
 </head>
 
 <body>
-    <div class="login-card">
-        <div class="header">
-            <h1>Welcome Back</h1>
-            <p class="subtitle">Internal Testing Environment</p>
+    <div class="container">
+        <!-- Left Side: Hero -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Build. Test. Deploy.</h1>
+                <p class="hero-text">Welcome to your secure internal testing environment. Access your dashboard to manage builds, monitor performance, and deploy updates seamlessly.</p>
+            </div>
         </div>
 
-        <div id="errorMsg" class="error-box">Invalid username or password</div>
+        <!-- Right Side: Login Form -->
+        <div class="form-section">
+            <div class="login-wrapper">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span>TestEnv</span>
+                </div>
 
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter your username" required
-                    autocomplete="username">
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required
-                    autocomplete="current-password">
-            </div>
-            <button type="submit" id="submitBtn">Sign In</button>
-        </form>
+                <div class="header">
+                    <h2>Welcome back</h2>
+                    <p>Please enter your details to sign in.</p>
+                </div>
 
-        <div class="footer">
-            &copy; 2026 Build Hosting Platform
+                <div id="errorMsg" class="error-message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Invalid username or password</span>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-container">
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-container">
+                            <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn">
+                        <span>Sign In</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="footer">
+                    &copy; 2026 Build Hosting Platform
+                </div>
+            </div>
         </div>
     </div>
 
@@ -288,12 +332,15 @@
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
         const errorBox = document.getElementById('errorMsg');
+        const btnText = submitBtn.querySelector('span');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Reset state
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing in...';
+            const originalBtnContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>Signing in...</span><svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>';
             errorBox.style.display = 'none';
 
             const formData = new FormData(form);
@@ -311,17 +358,30 @@
                     localStorage.setItem('user', JSON.stringify(user));
                     window.location.href = '/';
                 } else {
-                    errorBox.style.display = 'block';
+                    errorBox.style.display = 'flex';
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
+                    submitBtn.innerHTML = originalBtnContent;
                 }
             } catch (err) {
-                errorBox.textContent = 'Network error. Please try again.';
-                errorBox.style.display = 'block';
+                console.error(err);
+                if (errorBox.querySelector('span')) {
+                     errorBox.querySelector('span').textContent = 'Network error. Please try again.';
+                } else {
+                     errorBox.textContent = 'Network error. Please try again.';
+                }
+                errorBox.style.display = 'flex';
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
+                submitBtn.innerHTML = originalBtnContent;
             }
         });
+
+        // Add simple spin animation
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes spin { 100% { transform: rotate(360deg); } }
+            .animate-spin { animation: spin 1s linear infinite; }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 
