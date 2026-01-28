@@ -7,58 +7,126 @@
     <title>Login - Testing Environment</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
             --surface: #ffffff;
-            --text: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --radius: 12px;
-            --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --text-main: #111827;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --error: #ef4444;       
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            background-image: radial-gradient(circle at 2px 2px, #e2e8f0 1px, transparent 0);
-            background-size: 40px 40px;
-            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
             display: flex;
+            min-height: 100vh;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        /* Split Layout */
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Hero Section (Left) */
+        .hero-section {
+            flex: 1;
+            background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.15) 0%, transparent 50%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero-text {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Form Section (Right) */
+        .form-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1.5rem;
-        }
-
-        .login-card {
+            padding: 2rem;
             background: var(--surface);
-            padding: 3rem 2.5rem;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .login-wrapper {
             width: 100%;
-            max-width: 420px;
-            border: 1px solid var(--border);
+            max-width: 400px;
+            padding: 2rem;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 2.5rem;
+        .brand-logo {
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+        
+        .brand-logo svg {
+            width: 32px;
+            height: 32px;
         }
 
-        h1 {
-            margin: 0;
+        .header h2 {
             font-size: 1.875rem;
-            font-weight: 800;
-            letter-spacing: -0.025em;
-            color: var(--text);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
         }
 
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
+        .header p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
         }
 
         .form-group {
@@ -68,26 +136,45 @@
         label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 0.875rem;
+            color: var(--text-main);
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        .input-container svg {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            transition: color 0.2s;
         }
 
         input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
             border: 1px solid var(--border);
             border-radius: 8px;
-            box-sizing: border-box;
             font-size: 1rem;
             transition: all 0.2s;
-            background: #fdfdfd;
+            background: #f9fafb;
         }
 
         input:focus {
             outline: none;
             border-color: var(--primary);
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        input:focus + svg {
+            color: var(--primary);
         }
 
         button {
@@ -98,16 +185,20 @@
             border: none;
             border-radius: 8px;
             font-size: 1rem;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         button:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
         }
 
         button:active {
@@ -117,26 +208,50 @@
         button:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .error-box {
+        .error-message {
             background: #fef2f2;
-            color: #991b1b;
+            color: var(--error);
             padding: 0.75rem;
             border-radius: 8px;
-            border: 1px solid #fecaca;
-            margin-bottom: 1.5rem;
             font-size: 0.875rem;
-            text-align: center;
-            font-weight: 500;
+            margin-bottom: 1.5rem;
             display: none;
+            border: 1px solid #fecaca;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error-message svg {
+            min-width: 20px;
         }
 
         .footer {
             margin-top: 2rem;
             text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                display: none;
+            }
+            
+            .form-section {
+                background: #f3f4f6;
+            }
+
+            .login-wrapper {
+                background: white;
+                padding: 2rem;
+                border-radius: 16px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
         }
     </style>
 </head>
