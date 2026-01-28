@@ -40,9 +40,9 @@
         body {
             font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
             background:
-                radial-gradient(900px 650px at 18% 12%, rgba(79, 70, 229, 0.22), transparent 60%),
-                radial-gradient(900px 650px at 85% 78%, rgba(14, 165, 233, 0.18), transparent 60%),
-                radial-gradient(800px 520px at 55% 8%, rgba(16, 185, 129, 0.12), transparent 62%),
+                radial-gradient(900px 650px at 18% 12%, rgba(79, 70, 229, 0.18), transparent 60%),
+                radial-gradient(900px 650px at 85% 78%, rgba(14, 165, 233, 0.14), transparent 60%),
+                radial-gradient(800px 520px at 55% 8%, rgba(16, 185, 129, 0.09), transparent 62%),
                 linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
             color: var(--text);
             display: grid;
@@ -58,9 +58,9 @@
             position: absolute;
             inset: -20%;
             background:
-                radial-gradient(760px 520px at 16% 20%, rgba(79, 70, 229, 0.26), transparent 63%),
-                radial-gradient(700px 520px at 86% 74%, rgba(14, 165, 233, 0.20), transparent 64%),
-                radial-gradient(640px 460px at 56% 6%, rgba(16, 185, 129, 0.12), transparent 66%);
+                radial-gradient(760px 520px at 16% 20%, rgba(79, 70, 229, 0.22), transparent 63%),
+                radial-gradient(700px 520px at 86% 74%, rgba(14, 165, 233, 0.16), transparent 64%),
+                radial-gradient(640px 460px at 56% 6%, rgba(16, 185, 129, 0.10), transparent 66%);
             filter: blur(18px);
             opacity: 0.95;
             pointer-events: none;
@@ -72,9 +72,9 @@
             position: absolute;
             inset: 0;
             background-image:
-                radial-gradient(rgba(15, 23, 42, 0.09) 1px, transparent 1px);
+                radial-gradient(rgba(15, 23, 42, 0.075) 1px, transparent 1px);
             background-size: 24px 24px;
-            opacity: 0.48;
+            opacity: 0.42;
             pointer-events: none;
             z-index: 0;
         }
@@ -116,15 +116,15 @@
         .card-aside {
             padding: 34px 30px;
             background:
-                radial-gradient(800px 520px at 20% 20%, rgba(79, 70, 229, 0.22), transparent 62%),
-                radial-gradient(700px 520px at 80% 78%, rgba(14, 165, 233, 0.18), transparent 64%),
+                radial-gradient(800px 520px at 20% 20%, rgba(79, 70, 229, 0.18), transparent 62%),
+                radial-gradient(700px 520px at 80% 78%, rgba(14, 165, 233, 0.14), transparent 64%),
                 linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(255, 255, 255, 0.92) 100%);
             border-right: 1px solid rgba(17, 24, 39, 0.08);
         }
 
         .aside-title {
             margin-top: 18px;
-            font-size: 1.8rem;
+            font-size: 1.55rem;
             letter-spacing: -0.04em;
             line-height: 1.1;
         }
@@ -132,31 +132,7 @@
         .aside-subtitle {
             margin-top: 10px;
             color: var(--muted);
-            font-size: 0.98rem;
-        }
-
-        .aside-points {
-            margin-top: 18px;
-            display: grid;
-            gap: 10px;
-            color: rgba(17, 24, 39, 0.78);
-            font-size: 0.9rem;
-        }
-
-        .aside-point {
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-        }
-
-        .aside-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: rgba(79, 70, 229, 0.25);
-            border: 1px solid rgba(79, 70, 229, 0.35);
-            margin-top: 5px;
-            flex: 0 0 auto;
+            font-size: 0.95rem;
         }
 
         .card-form {
@@ -424,19 +400,13 @@
                         </div>
                     </div>
 
-                    <h1 class="aside-title">Deploy, manage, and monitor in one place.</h1>
-                    <p class="aside-subtitle">Sign in to access your dashboard, deployments, and activity logs.</p>
-
-                    <div class="aside-points" aria-hidden="true">
-                        <div class="aside-point"><span class="aside-dot"></span><span>Fast deploys for ZIP builds and Docker images</span></div>
-                        <div class="aside-point"><span class="aside-dot"></span><span>Clear activity logs with filters and search</span></div>
-                        <div class="aside-point"><span class="aside-dot"></span><span>Admin view to manage teams and environments</span></div>
-                    </div>
+                    <h1 class="aside-title">Welcome.</h1>
+                    <p class="aside-subtitle">Sign in to manage deployments.</p>
                 </aside>
 
                 <div class="card-form">
-                    <div class="form-title">Welcome back</div>
-                    <div class="form-subtitle">Sign in to continue to your dashboard.</div>
+                    <div class="form-title">Sign in</div>
+                    <div class="form-subtitle">Continue to the dashboard.</div>
 
                     <div id="errorMsg" class="error" role="alert" aria-live="polite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
