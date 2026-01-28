@@ -7,8 +7,8 @@
     <title>Login - Testing Environment</title>
     <style>
         :root {
-            /* Minimal & beautiful (light) */
-            --bg: #fafafa;
+            /* Match dashboard theme */
+            --bg: #f8fafc;
             --bg-2: #ffffff;
             --card: rgba(255, 255, 255, 0.9);
             --border: rgba(17, 24, 39, 0.10);
@@ -24,6 +24,8 @@
             --radius: 16px;
         }
 
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -36,8 +38,11 @@
         }
 
         body {
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+            font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            background:
+                radial-gradient(900px 650px at 18% 12%, rgba(79, 70, 229, 0.14), transparent 60%),
+                radial-gradient(900px 650px at 85% 78%, rgba(14, 165, 233, 0.10), transparent 60%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
             color: var(--text);
             display: grid;
             place-items: center;
@@ -53,7 +58,7 @@
             inset: -20%;
             background:
                 radial-gradient(700px 450px at 15% 20%, rgba(79, 70, 229, 0.16), transparent 62%),
-                radial-gradient(600px 420px at 85% 75%, rgba(79, 70, 229, 0.10), transparent 62%),
+                radial-gradient(600px 420px at 85% 75%, rgba(14, 165, 233, 0.11), transparent 62%),
                 radial-gradient(520px 360px at 55% 10%, rgba(16, 185, 129, 0.07), transparent 65%);
             filter: blur(10px);
             pointer-events: none;
@@ -204,7 +209,7 @@
 
         input {
             width: 100%;
-            padding: 12px 12px 12px 42px;
+            padding: 12px 44px 12px 42px;
             border-radius: 12px;
             border: 1px solid rgba(17, 24, 39, 0.12);
             background: rgba(255, 255, 255, 0.98);
@@ -212,6 +217,27 @@
             outline: none;
             font-size: 0.95rem;
             transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+        }
+
+        .pw-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 1px solid rgba(17, 24, 39, 0.12);
+            background: rgba(255, 255, 255, 0.9);
+            color: rgba(17, 24, 39, 0.72);
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+        }
+
+        .pw-toggle:hover {
+            color: rgba(17, 24, 39, 0.92);
+            border-color: rgba(79, 70, 229, 0.30);
         }
 
         input::placeholder {
@@ -347,6 +373,7 @@
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                         <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" id="pwToggle" class="pw-toggle" aria-label="Show password">Show</button>
                     </div>
                 </div>
 
@@ -369,6 +396,25 @@
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
         const errorBox = document.getElementById('errorMsg');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const pwToggle = document.getElementById('pwToggle');
+
+        // Prefill last username (UX only)
+        const lastUsername = localStorage.getItem('lastUsername');
+        if (lastUsername && usernameInput && !usernameInput.value) {
+            usernameInput.value = lastUsername;
+        }
+
+        if (pwToggle && passwordInput) {
+            pwToggle.addEventListener('click', () => {
+                const isHidden = passwordInput.type === 'password';
+                passwordInput.type = isHidden ? 'text' : 'password';
+                pwToggle.textContent = isHidden ? 'Hide' : 'Show';
+                pwToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                passwordInput.focus();
+            });
+        }
 
         const setErrorVisible = (visible, message) => {
             if (message) {
@@ -416,6 +462,7 @@
                 if (res.ok) {
                     const user = await res.json();
                     localStorage.setItem('user', JSON.stringify(user));
+                    if (usernameInput?.value) localStorage.setItem('lastUsername', usernameInput.value);
                     window.location.href = '/';
                     return;
                 }
