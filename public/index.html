@@ -475,6 +475,7 @@
             align-items: baseline;
             gap: 1rem;
             background: linear-gradient(180deg, rgba(241, 245, 249, 0.75) 0%, rgba(255, 255, 255, 0) 100%);
+            flex-wrap: wrap;
         }
 
         .history-card-title {
@@ -490,9 +491,94 @@
             white-space: nowrap;
         }
 
+        .history-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .history-filters {
+            display: inline-flex;
+            gap: 0.4rem;
+            padding: 0.25rem;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(241, 245, 249, 0.8);
+        }
+
+        .pill {
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: none;
+        }
+
+        .pill:hover {
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--text-main);
+        }
+
+        .pill.active {
+            background: var(--surface);
+            color: var(--primary);
+            border-color: rgba(79, 70, 229, 0.18);
+        }
+
+        .history-search {
+            width: min(320px, 75vw);
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.95);
+            font-family: inherit;
+        }
+
+        .history-search:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+        }
+
         .history-list {
             max-height: 520px;
             overflow: auto;
+            scrollbar-gutter: stable;
+            scrollbar-color: rgba(100, 116, 139, 0.55) rgba(226, 232, 240, 0.55);
+            scrollbar-width: thin;
+        }
+
+        .history-list::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.55);
+            border-left: 1px solid rgba(226, 232, 240, 0.75);
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.55);
+            border-radius: 999px;
+            border: 3px solid rgba(226, 232, 240, 0.55);
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .history-item {
+                animation: fadeUp 180ms ease-out both;
+            }
+
+            @keyframes fadeUp {
+                from { opacity: 0; transform: translateY(6px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
         }
 
         @media (max-width: 900px) {
@@ -509,6 +595,11 @@
             gap: 0.75rem;
             align-items: start;
             font-size: 0.88rem;
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .history-item:last-child {
@@ -726,7 +817,16 @@
                         <div class="card history-card">
                             <div class="history-card-header">
                                 <h2 class="history-card-title">Activity Logs</h2>
-                                <div class="history-card-subtitle" id="historyMeta">Latest events</div>
+                                <div class="history-controls">
+                                    <div class="history-filters" id="historyFilters" aria-label="History filters">
+                                        <button type="button" class="pill active" data-history-filter="all">All</button>
+                                        <button type="button" class="pill" data-history-filter="upload">Upload</button>
+                                        <button type="button" class="pill" data-history-filter="delete">Delete</button>
+                                        <button type="button" class="pill" data-history-filter="docker">Docker</button>
+                                    </div>
+                                    <input id="historySearch" class="history-search" type="search" placeholder="Search app or user…" autocomplete="off" />
+                                    <div class="history-card-subtitle" id="historyMeta">Latest events</div>
+                                </div>
                             </div>
                             <div id="historyList" class="history-list">
                                 <div style="padding: 2rem; text-align: center; color: var(--text-muted)">No activity yet.</div>
@@ -1007,6 +1107,51 @@
         // State
         let allApps = {};
         let allDevelopers = [];
+        let allHistory = [];
+        let historyFilter = 'all';
+        let historyQuery = '';
+
+        const historySearchEl = document.getElementById('historySearch');
+        const historyFiltersEl = document.getElementById('historyFilters');
+
+        function setActiveHistoryFilter(nextFilter) {
+            historyFilter = nextFilter;
+            if (!historyFiltersEl) return;
+            historyFiltersEl.querySelectorAll('[data-history-filter]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.historyFilter === historyFilter);
+            });
+        }
+
+        function applyHistoryFilter() {
+            const q = (historyQuery || '').trim().toLowerCase();
+            const filtered = (allHistory || []).filter(item => {
+                const rawAction = (item.action || (item.deletedAt ? 'delete' : 'upload'));
+                const matchesType = historyFilter === 'all' ? true : rawAction.includes(historyFilter);
+                if (!matchesType) return false;
+
+                if (!q) return true;
+                const haystack = `${item.appName || ''} ${item.owner || ''} ${rawAction}`.toLowerCase();
+                return haystack.includes(q);
+            });
+
+            renderHistory(filtered, { total: (allHistory || []).length });
+        }
+
+        if (historyFiltersEl) {
+            historyFiltersEl.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-history-filter]');
+                if (!btn) return;
+                setActiveHistoryFilter(btn.dataset.historyFilter);
+                applyHistoryFilter();
+            });
+        }
+
+        if (historySearchEl) {
+            historySearchEl.addEventListener('input', () => {
+                historyQuery = historySearchEl.value;
+                applyHistoryFilter();
+            });
+        }
 
         async function loadApps() {
             try {
@@ -1014,14 +1159,14 @@
                 const data = await res.json();
                 allApps = data.apps || {};
                 allDevelopers = data.developers || [];
-                const history = data.history || [];
+                allHistory = data.history || [];
 
                 if (user.role === 'admin') {
                     renderAdminView(allApps);
                 } else {
                     renderAppList(allApps);
                 }
-                renderHistory(history);
+                applyHistoryFilter();
                 document.getElementById('historySection').style.display = 'block';
             } catch (err) {
                 console.error(err);
@@ -1152,16 +1297,22 @@
             viewContainer.innerHTML = renderAppListHtml(apps);
         }
 
-        function renderHistory(history) {
+        function renderHistory(history, opts = {}) {
             const list = document.getElementById('historyList');
             const meta = document.getElementById('historyMeta');
             if (history.length === 0) {
-                if (meta) meta.textContent = 'No events yet';
+                const total = typeof opts.total === 'number' ? opts.total : history.length;
+                if (meta) meta.textContent = total ? `0/${total} events` : 'No events yet';
                 list.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted)">No history recorded</div>';
                 return;
             }
 
-            if (meta) meta.textContent = `${history.length} event${history.length === 1 ? '' : 's'}`;
+            if (meta) {
+                const total = typeof opts.total === 'number' ? opts.total : history.length;
+                meta.textContent = total !== history.length
+                    ? `${history.length}/${total} events`
+                    : `${history.length} event${history.length === 1 ? '' : 's'}`;
+            }
 
             list.innerHTML = history.map(item => {
                 const rawAction = (item.action || (item.deletedAt ? 'delete' : 'upload'));
@@ -1183,7 +1334,7 @@
                             <span class="history-app" title="${appName}">${appName}</span>
                         </div>
                         <div class="history-meta">
-                            Performed by <b>${owner}</b>${item.port ? ` • Port <b>${item.port}</b>` : ''}${item.image ? ` • Image <b>${item.image}</b>` : ''}${item.category ? ` • ${item.category}</b>` : ''}
+                            Performed by <b>${owner}</b>${item.port ? ` • Port <b>${item.port}</b>` : ''}${item.image ? ` • Image <b>${item.image}</b>` : ''}${item.category ? ` • Category <b>${item.category}</b>` : ''}
                         </div>
                     </div>
                     <div class="history-time">${timestamp ? new Date(timestamp).toLocaleString() : 'N/A'}</div>
