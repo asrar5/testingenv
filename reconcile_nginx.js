@@ -10,9 +10,19 @@ const execAsync = util.promisify(exec);
 const SITES_AVAILABLE = process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available';
 const SITES_ENABLED = process.env.NGINX_SITES_ENABLED || '/etc/nginx/sites-enabled';
 const GATEWAY_ROUTES = process.env.NGINX_GATEWAY_ROUTES || '/etc/nginx/gateway-routes';
+const BUILD_ROOT = process.env.BUILD_ROOT || path.join(__dirname, 'builds');
 
 async function reconcile() {
     console.log('Starting Nginx reconciliation...');
+    // Ensure BUILD_ROOT has correct permissions so Nginx (www-data) can traverse it
+    try {
+        console.log(`Fixing permissions on BUILD_ROOT: ${BUILD_ROOT}`);
+        await execAsync(`sudo chmod +x ${path.dirname(BUILD_ROOT)}`); 
+        await execAsync(`sudo chmod +x ${BUILD_ROOT}`);
+    } catch (e) {
+        console.warn('Could not fix permissions on BUILD_ROOT:', e.message);
+    }
+
     try {
         const apps = await PortManager.getAllAllocations();
         const appNames = Object.keys(apps);
@@ -88,6 +98,21 @@ async function reconcile() {
                 continue;
             }
 
+            // ZIP Checks: Ensure content is valid before creating configuration
+            const appBuildPath = path.join(BUILD_ROOT, appName);
+            const indexFile = path.join(appBuildPath, 'index.html');
+            
+            if (!fs.existsSync(appBuildPath) || !fs.existsSync(indexFile)) {
+                console.error(`[ERROR] App ${appName} is missing build directory or index.html. Skipping Nginx generation to prevent 500 errors.`);
+                // Clean up any bad state implies "site down" rather than "broken loop"
+                await NginxGenerator.removeConfigs(appName);
+                // Also remove gateway route so it shows 404
+                try {
+                    await execAsync(`sudo rm -f ${GATEWAY_ROUTES}/${appName}.conf`);
+                } catch (e) {}
+                continue;
+            }
+
             console.log(`Ensuring static site + route for ${appName} on port ${port}...`);
             await NginxGenerator.generateAppConfig(appName, port);
             await NginxGenerator.updateGatewayConfig(appName, port);
@@ -98,17 +123,17 @@ async function reconcile() {
 
         // --- PRUNING LOGIC ---
         console.log('Pruning orphaned directories...');
-        const buildsDir = process.env.BUILD_ROOT || path.join(__dirname, 'builds');
-        if (fs.existsSync(buildsDir)) {
-             const dirs = fs.readdirSync(buildsDir).filter(f => {
-                const stat = fs.statSync(path.join(buildsDir, f));
+        // const buildsDir = BUILD_ROOT; // Already defined globally
+        if (fs.existsSync(BUILD_ROOT)) {
+             const dirs = fs.readdirSync(BUILD_ROOT).filter(f => {
+                const stat = fs.statSync(path.join(BUILD_ROOT, f));
                 return stat.isDirectory() && !f.startsWith('.'); // Ignore .backups and .temp-...
             });
 
             for (const dirName of dirs) {
                 if (!appNames.includes(dirName)) {
                     console.log(`Pruning orphaned directory: ${dirName}`);
-                    fs.rmSync(path.join(buildsDir, dirName), { recursive: true, force: true });
+                    fs.rmSync(path.join(BUILD_ROOT, dirName), { recursive: true, force: true });
                     // Also try to remove Nginx configs if they exist
                     await NginxGenerator.removeConfigs(dirName);
                 }
