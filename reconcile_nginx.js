@@ -3,6 +3,13 @@ const path = require('path');
 require('dotenv').config();
 const NginxGenerator = require('./lib/nginx-generator');
 const PortManager = require('./lib/port-manager');
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
+
+const SITES_AVAILABLE = process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available';
+const SITES_ENABLED = process.env.NGINX_SITES_ENABLED || '/etc/nginx/sites-enabled';
+const GATEWAY_ROUTES = process.env.NGINX_GATEWAY_ROUTES || '/etc/nginx/gateway-routes';
 
 async function reconcile() {
     console.log('Starting Nginx reconciliation...');
@@ -17,9 +24,20 @@ async function reconcile() {
 
         for (const appName of appNames) {
             const data = apps[appName];
-            const port = typeof data === 'object' ? data.port : data;
+            const meta = (typeof data === 'object') ? data : { port: data, type: 'zip' };
+            const port = meta.port;
+            const type = meta.type || 'zip';
 
-            console.log(`Generating config for ${appName} on port ${port}...`);
+            if (type === 'docker') {
+                // IMPORTANT: Do NOT generate a static file server for docker apps.
+                // The container is expected to bind to this port, and an nginx server block would steal it.
+                console.log(`Ensuring docker route for ${appName} -> localhost:${port} (no listen server)...`);
+                await NginxGenerator.removeConfigs(appName);
+                await NginxGenerator.updateGatewayConfig(appName, port);
+                continue;
+            }
+
+            console.log(`Ensuring static site + route for ${appName} on port ${port}...`);
             await NginxGenerator.generateAppConfig(appName, port);
             await NginxGenerator.updateGatewayConfig(appName, port);
         }
@@ -46,6 +64,44 @@ async function reconcile() {
             }
         } else {
              console.log('Builds directory not found, skipping pruning.');
+        }
+
+        // Prune orphaned nginx site configs even if the build dir is already gone
+        console.log('Pruning orphaned Nginx site configs/routes...');
+        const desiredApps = new Set(appNames);
+
+        try {
+            const { stdout } = await execAsync(`sudo ls -1 ${SITES_AVAILABLE} 2>/dev/null || true`);
+            const files = stdout.split('\n').map(s => s.trim()).filter(Boolean);
+            const buildFiles = files.filter(f => f.startsWith('build-'));
+            for (const file of buildFiles) {
+                const orphanApp = file.replace(/^build-/, '');
+                const meta = apps[orphanApp];
+                const type = (typeof meta === 'object' && meta && meta.type) ? meta.type : null;
+
+                // Remove if not in ports.json OR if it's a docker app (docker should not have a build-* site)
+                if (!desiredApps.has(orphanApp) || type === 'docker') {
+                    console.log(`Removing orphaned site config: ${file}`);
+                    await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not prune sites-available:', e.message);
+        }
+
+        try {
+            const { stdout } = await execAsync(`sudo ls -1 ${GATEWAY_ROUTES} 2>/dev/null || true`);
+            const files = stdout.split('\n').map(s => s.trim()).filter(Boolean);
+            const routeFiles = files.filter(f => f.endsWith('.conf'));
+            for (const file of routeFiles) {
+                const orphanApp = file.replace(/\.conf$/, '');
+                if (!desiredApps.has(orphanApp)) {
+                    console.log(`Removing orphaned route: ${file}`);
+                    await execAsync(`sudo rm -f ${GATEWAY_ROUTES}/${file}`);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not prune gateway-routes:', e.message);
         }
 
         // Also prune temp files older than 1 hour? 
