@@ -43,6 +43,12 @@ jobs:
             echo "Installing dependencies..."
             npm install --production
 
+            # Create necessary directories
+            echo "Creating required directories..."
+            mkdir -p uploads
+            mkdir -p builds
+            mkdir -p data
+
             # Run setup script (Configure Nginx/Paths) from existing .env
             # Note: This requires the user to have passwordless sudo or appropriate permissions
             echo "Running setup configuration..."
