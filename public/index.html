@@ -515,6 +515,12 @@
             border: 1px solid #fecaca;
         }
 
+        .info {
+            background: #eff6ff;
+            color: #1e3a8a;
+            border: 1px solid #bfdbfe;
+        }
+
         /* Dashboard layout */
         .dashboard-layout {
             display: grid;
@@ -1101,9 +1107,27 @@
                     xhr.open('POST', '/upload', true);
                     xhr.setRequestHeader('x-user', JSON.stringify(user));
 
+                    xhr.upload.onprogress = (event) => {
+                        if (!event.lengthComputable) return;
+                        const pct = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)));
+                        status.className = 'status-msg info';
+                        status.textContent = `Uploading... ${pct}%`;
+                        status.style.display = 'block';
+                    };
+
+                    xhr.upload.onload = () => {
+                        status.className = 'status-msg info';
+                        status.textContent = 'Upload complete. Deploying...';
+                        status.style.display = 'block';
+                    };
+
                     xhr.onload = () => {
                         if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
-                        else reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed'));
+                        else {
+                            let msg = 'Upload failed';
+                            try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
+                            reject(new Error(msg));
+                        }
                     };
                     xhr.onerror = () => reject(new Error('Network error'));
                     xhr.send(formData);
@@ -1150,17 +1174,39 @@
                 formData.append('file', dockerFileInput.files[0]);
 
                 console.log('Submitting to /api/upload-docker-image');
-                const res = await fetchWithAuth('/api/upload-docker-image', {
-                    method: 'POST',
-                    body: formData
+                const result = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/upload-docker-image', true);
+                    xhr.setRequestHeader('x-user', JSON.stringify(user));
+
+                    xhr.upload.onprogress = (event) => {
+                        if (!event.lengthComputable) return;
+                        const pct = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)));
+                        status.className = 'status-msg info';
+                        status.textContent = `Uploading image... ${pct}%`;
+                        status.style.display = 'block';
+                    };
+
+                    xhr.upload.onload = () => {
+                        status.className = 'status-msg info';
+                        status.textContent = 'Upload complete. Loading image & deploying...';
+                        status.style.display = 'block';
+                    };
+
+                    xhr.onload = () => {
+                        let body = null;
+                        try { body = JSON.parse(xhr.responseText); } catch (e) { }
+                        if (xhr.status >= 200 && xhr.status < 300) return resolve(body);
+                        const msg = (body && body.error) ? body.error : 'Deployment failed';
+                        reject(new Error(msg));
+                    };
+                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.send(formData);
                 });
 
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.error || 'Deployment failed');
+                if (!result || !result.port) {
+                    throw new Error('Deployment succeeded but response was invalid');
                 }
-
-                const result = await res.json();
                 status.className = 'status-msg success';
                 const host = window.location.hostname;
                 const link = `http://${host}:${result.port}/`;
