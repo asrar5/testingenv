@@ -14,11 +14,26 @@ const BUILD_ROOT = process.env.BUILD_ROOT || path.join(__dirname, 'builds');
 
 async function reconcile() {
     console.log('Starting Nginx reconciliation...');
-    // Ensure BUILD_ROOT has correct permissions so Nginx (www-data) can traverse it
+    
+    // PERMISSION FIX: Ensure Nginx (www-data) can traverse from Root -> Build Dir
     try {
-        console.log(`Fixing permissions on BUILD_ROOT: ${BUILD_ROOT}`);
-        await execAsync(`sudo chmod +x ${path.dirname(BUILD_ROOT)}`); 
-        await execAsync(`sudo chmod +x ${BUILD_ROOT}`);
+        if (!fs.existsSync(BUILD_ROOT)) {
+             fs.mkdirSync(BUILD_ROOT, { recursive: true });
+        }
+        
+        let currentDir = BUILD_ROOT;
+        const fsRoot = path.parse(BUILD_ROOT).root; // "/"
+        
+        // Walk up until we hit the filesystem root
+        while (currentDir !== fsRoot) {
+            try {
+                // chmod o+x (others + execute) allows traversal
+                await execAsync(`sudo chmod o+x "${currentDir}"`);
+            } catch (e) { /* Ignore */ }
+            currentDir = path.dirname(currentDir);
+        }
+        // Ensure the build root itself is accessible
+        await execAsync(`sudo chmod 777 "${BUILD_ROOT}"`);
     } catch (e) {
         console.warn('Could not fix permissions on BUILD_ROOT:', e.message);
     }
