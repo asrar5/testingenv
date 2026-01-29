@@ -103,13 +103,20 @@ async function reconcile() {
             const indexFile = path.join(appBuildPath, 'index.html');
             
             if (!fs.existsSync(appBuildPath) || !fs.existsSync(indexFile)) {
-                console.error(`[ERROR] App ${appName} is missing build directory or index.html. Skipping Nginx generation to prevent 500 errors.`);
-                // Clean up any bad state implies "site down" rather than "broken loop"
+                console.error(`[Reconcile] Corrupt state detected for ${appName}: Build directory or index.html missing.`);
+                
+                // 1. Remove Nginx Configs (Stop the 500 error)
                 await NginxGenerator.removeConfigs(appName);
-                // Also remove gateway route so it shows 404
+                
+                // 2. Remove Gateway Route
                 try {
                     await execAsync(`sudo rm -f ${GATEWAY_ROUTES}/${appName}.conf`);
                 } catch (e) {}
+
+                // 3. Remove from Database (ports.json) to prevent future errors
+                console.log(`[Reconcile] Removing ${appName} from database to restore system integrity.`);
+                await PortManager.releasePort(appName);
+                
                 continue;
             }
 
