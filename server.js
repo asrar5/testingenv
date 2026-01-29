@@ -2,6 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 require('dotenv').config();
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
 
 const Deployer = require('./lib/deployer');
 const NginxGenerator = require('./lib/nginx-generator');
@@ -242,6 +245,12 @@ app.delete('/api/apps/:appName', requireAuth, async (req, res) => {
         console.log(`[${appName}] Removing Nginx configs...`);
         await NginxGenerator.removeConfigs(appName);
 
+        // Extra safety: remove any OTHER stale build-* site configs that still listen on this port.
+        // This prevents persistent 500s and "port already allocated" issues after deletes.
+        if (port !== 'unknown') {
+            await NginxGenerator.removeSiteConfigsListeningOnPort(port);
+        }
+
         // 3. Handle specific type cleanup
         if (meta && meta.type === 'docker') {
             console.log(`[${appName}] Stopping and removing Docker container...`);
@@ -337,3 +346,32 @@ app.listen(PORT, HOST, () => {
     console.log(`Upload UI: http://localhost:${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+// --- Automatic Nginx reconciliation ---
+// Keeps ports.json, builds/, and /etc/nginx configs in sync to avoid persistent 500s
+// due to duplicate "listen <port>" server blocks or stale build-* configs.
+const NGINX_AUTO_RECONCILE = (process.env.NGINX_AUTO_RECONCILE || 'true').toLowerCase() === 'true';
+const NGINX_RECONCILE_INTERVAL_MS = parseInt(process.env.NGINX_RECONCILE_INTERVAL_MS || '300000'); // 5 min
+
+async function runNginxReconcile(reason) {
+    if (!NGINX_AUTO_RECONCILE) return;
+    try {
+        const scriptPath = path.join(__dirname, 'reconcile_nginx.js');
+        const { stdout, stderr } = await execAsync(`node ${scriptPath}`);
+        if (stdout && stdout.trim()) console.log(`[nginx-reconcile] ${reason}:\n${stdout.trim()}`);
+        if (stderr && stderr.trim()) console.warn(`[nginx-reconcile] ${reason} stderr:\n${stderr.trim()}`);
+    } catch (e) {
+        console.warn(`[nginx-reconcile] ${reason} failed: ${e.message}`);
+    }
+}
+
+// Run once shortly after startup, then periodically.
+setTimeout(() => {
+    runNginxReconcile('startup');
+}, 2000);
+
+if (Number.isFinite(NGINX_RECONCILE_INTERVAL_MS) && NGINX_RECONCILE_INTERVAL_MS > 0) {
+    setInterval(() => {
+        runNginxReconcile('interval');
+    }, NGINX_RECONCILE_INTERVAL_MS);
+}

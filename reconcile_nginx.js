@@ -22,6 +22,57 @@ async function reconcile() {
             return;
         }
 
+        // Build desired port/type map from ports.json
+        const desired = {};
+        for (const appName of appNames) {
+            const data = apps[appName];
+            desired[appName] = (typeof data === 'object') ? data : { port: data, type: 'zip' };
+        }
+
+        // Pre-prune: remove stale/mismatched build-* configs so we don't end up with duplicates
+        console.log('Pre-pruning mismatched Nginx site configs...');
+        try {
+            const { stdout } = await execAsync(`sudo ls -1 ${SITES_AVAILABLE} 2>/dev/null || true`);
+            const files = stdout.split('\n').map(s => s.trim()).filter(Boolean);
+            const buildFiles = files.filter(f => f.startsWith('build-'));
+
+            for (const file of buildFiles) {
+                const appFromFile = file.replace(/^build-/, '');
+                const meta = desired[appFromFile];
+
+                // Orphaned -> remove
+                if (!meta) {
+                    console.log(`Removing orphaned site config: ${file}`);
+                    await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
+                    continue;
+                }
+
+                // Docker apps must not have build-* site configs
+                if ((meta.type || 'zip') === 'docker') {
+                    console.log(`Removing docker site config (should not exist): ${file}`);
+                    await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
+                    continue;
+                }
+
+                // If the config's listen port doesn't match ports.json, remove it.
+                // We'll regenerate the correct one later.
+                const expectedPort = meta.port;
+                try {
+                    const { stdout: cfg } = await execAsync(`sudo cat ${SITES_AVAILABLE}/${file} 2>/dev/null || true`);
+                    const m = cfg.match(/\blisten\s+(\d+)\s*;/);
+                    const actualPort = m ? parseInt(m[1]) : NaN;
+                    if (!Number.isFinite(actualPort) || actualPort !== expectedPort) {
+                        console.log(`Removing mismatched site config: ${file} (expected ${expectedPort}, got ${Number.isFinite(actualPort) ? actualPort : 'unknown'})`);
+                        await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
+                    }
+                } catch (e) {
+                    console.warn(`Could not inspect ${file}: ${e.message}`);
+                }
+            }
+        } catch (e) {
+            console.warn('Pre-prune failed:', e.message);
+        }
+
         for (const appName of appNames) {
             const data = apps[appName];
             const meta = (typeof data === 'object') ? data : { port: data, type: 'zip' };
