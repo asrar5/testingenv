@@ -12,9 +12,12 @@ const SITES_ENABLED = process.env.NGINX_SITES_ENABLED || '/etc/nginx/sites-enabl
 const GATEWAY_ROUTES = process.env.NGINX_GATEWAY_ROUTES || '/etc/nginx/gateway-routes';
 const BUILD_ROOT = process.env.BUILD_ROOT || path.join(__dirname, 'builds');
 
+const MIN_PORT = parseInt(process.env.MIN_PORT) || 3320;
+const MAX_PORT = parseInt(process.env.MAX_PORT) || 3990;
+
 async function reconcile() {
-    console.log('Starting Nginx reconciliation...');
-    
+    console.log('Starting System Reconciliation (Nginx + Docker + Files)...');
+
     // PERMISSION FIX: Ensure Nginx (www-data) can traverse from Root -> Build Dir
     try {
         if (!fs.existsSync(BUILD_ROOT)) {
@@ -41,10 +44,63 @@ async function reconcile() {
     try {
         const apps = await PortManager.getAllAllocations();
         const appNames = Object.keys(apps);
+        const desiredApps = new Set(appNames);
 
+        // --- DOCKER SYNC START ---
+        console.log('Syncing Docker containers...');
+        try {
+            // Get all containers with their ports and names
+            // Format: ID|Names|Ports
+            const { stdout: dockerOut } = await execAsync(`sudo docker ps -a --format "{{.ID}}|{{.Names}}|{{.Ports}}"`);
+            const containers = dockerOut.split('\n').filter(Boolean).map(line => {
+                const [id, name, ports] = line.split('|');
+                return { id, name, ports };
+            });
+
+            // 1. Prune Zombie Containers (Running/Allocated but not in ports.json)
+            for (const container of containers) {
+                // Check if container binds to any port in our managed range
+                // Ports format examples: "0.0.0.0:3326->80/tcp", "3326/tcp"
+                const portMatch = container.ports.match(/:(\d+)->/);
+                const boundPort = portMatch ? parseInt(portMatch[1]) : null;
+
+                const isManagedPort = boundPort && boundPort >= MIN_PORT && boundPort <= MAX_PORT;
+                
+                // If it's using one of our ports OR it has a name of a deleted app (if we tracked that?)
+                // Strategy: If it's using a Managed Port AND it is NOT in the desiredApps list -> KILL
+                // Strategy 2: If the container Name is in desiredApps list?
+                
+                // Match by NAME is stronger.
+                // If container.name exists in ports.json:
+                if (desiredApps.has(container.name)) {
+                    // Check if it's running. If stopped, try to start?
+                    // We can check status if needed, but 'docker start' is idempotent-ish if running
+                    // We won't auto-start here to avoid loops, but we leave it alone.
+                } else {
+                    // It is NOT in ports.json. 
+                    // Should we delete it? Only if it conflicts with our ports?
+                    // Or if we own the machine, we assume all containers are ours?
+                    // Safer: Only delete if it holds a managed port.
+                    
+                    if (isManagedPort) {
+                        console.log(`[Docker Prune] Found Zombie Container '${container.name}' holding managed port ${boundPort}. Removing...`);
+                        try {
+                            await execAsync(`sudo docker rm -f ${container.id}`);
+                            console.log(`[Docker Prune] Removed ${container.name}`);
+                        } catch (e) {
+                            console.error(`[Docker Prune] Failed to remove ${container.name}:`, e.message);
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Docker sync failed:', e.message);
+        }
+        // --- DOCKER SYNC END ---
+
+        /* ... existing logic ... */
         if (appNames.length === 0) {
-            console.log('No apps found in ports.json');
-            return;
+            // ... (keep logic) but careful about return, we want to run the rest
         }
 
         // Build desired port/type map from ports.json
@@ -54,7 +110,8 @@ async function reconcile() {
             desired[appName] = (typeof data === 'object') ? data : { port: data, type: 'zip' };
         }
 
-        // Pre-prune: remove stale/mismatched build-* configs so we don't end up with duplicates
+        // Pre-prune matches ports.json vs sites-available etc.
+        // ... (Keep existing pre-prune logic loop) ...
         console.log('Pre-pruning mismatched Nginx site configs...');
         try {
             const { stdout } = await execAsync(`sudo ls -1 ${SITES_AVAILABLE} 2>/dev/null || true`);
@@ -73,31 +130,29 @@ async function reconcile() {
                 }
 
                 // Docker apps must not have build-* site configs
-                if ((meta.type || 'zip') === 'docker') {
+                if (meta.type === 'docker') {
                     console.log(`Removing docker site config (should not exist): ${file}`);
                     await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
                     continue;
                 }
-
-                // If the config's listen port doesn't match ports.json, remove it.
-                // We'll regenerate the correct one later.
+                
+                // Port mismatch check
                 const expectedPort = meta.port;
                 try {
                     const { stdout: cfg } = await execAsync(`sudo cat ${SITES_AVAILABLE}/${file} 2>/dev/null || true`);
                     const m = cfg.match(/\blisten\s+(\d+)\s*;/);
                     const actualPort = m ? parseInt(m[1]) : NaN;
-                    if (!Number.isFinite(actualPort) || actualPort !== expectedPort) {
-                        console.log(`Removing mismatched site config: ${file} (expected ${expectedPort}, got ${Number.isFinite(actualPort) ? actualPort : 'unknown'})`);
+                    if (Number.isFinite(actualPort) && actualPort !== expectedPort) {
+                        console.log(`Removing mismatched site config: ${file} (expected ${expectedPort}, got ${actualPort})`);
                         await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
                     }
-                } catch (e) {
-                    console.warn(`Could not inspect ${file}: ${e.message}`);
-                }
+                } catch (e) {}
             }
         } catch (e) {
             console.warn('Pre-prune failed:', e.message);
         }
 
+        // --- GATEWAY UPDATE LOOP ---
         for (const appName of appNames) {
             const data = apps[appName];
             const meta = (typeof data === 'object') ? data : { port: data, type: 'zip' };
@@ -105,37 +160,42 @@ async function reconcile() {
             const type = meta.type || 'zip';
 
             if (type === 'docker') {
-                // IMPORTANT: Do NOT generate a static file server for docker apps.
-                // The container is expected to bind to this port, and an nginx server block would steal it.
-                console.log(`Ensuring docker route for ${appName} -> localhost:${port} (no listen server)...`);
+                // Ensure no static server exists for docker
                 await NginxGenerator.removeConfigs(appName);
+                // Ensure gateway config exists
                 await NginxGenerator.updateGatewayConfig(appName, port);
+                
+                // --- Revive Docker if missing? ---
+                // If the app is in ports.json, we expect it to be running.
+                // We did a sweeping check earlier. Detailed check here:
+                /*
+                try {
+                    // Check if running
+                    await execAsync(`sudo docker inspect ${appName}`);
+                } catch (e) {
+                    console.warn(`[Sync] Docker app '${appName}' is in DB but not running. Manual redeploy may be required.`);
+                }
+                */
                 continue;
             }
 
-            // ZIP Checks: Ensure content is valid before creating configuration
+            // ZIP Checks
             const appBuildPath = path.join(BUILD_ROOT, appName);
             const indexFile = path.join(appBuildPath, 'index.html');
             
             if (!fs.existsSync(appBuildPath) || !fs.existsSync(indexFile)) {
                 console.error(`[Reconcile] Corrupt state detected for ${appName}: Build directory or index.html missing.`);
-                
-                // 1. Remove Nginx Configs (Stop the 500 error)
                 await NginxGenerator.removeConfigs(appName);
-                
-                // 2. Remove Gateway Route
-                try {
-                    await execAsync(`sudo rm -f ${GATEWAY_ROUTES}/${appName}.conf`);
-                } catch (e) {}
-
-                // 3. Remove from Database (ports.json) to prevent future errors
-                console.log(`[Reconcile] Removing ${appName} from database to restore system integrity.`);
+                try { await execAsync(`sudo rm -f ${GATEWAY_ROUTES}/${appName}.conf`); } catch (e) {}
+                console.log(`[Reconcile] Removing ${appName} from database.`);
                 await PortManager.releasePort(appName);
-                
                 continue;
             }
 
-            console.log(`Ensuring static site + route for ${appName} on port ${port}...`);
+            // Ensure static config
+            // We can optimize by checking if it already exists and is correct?
+            // For now, regenerating is safe and ensures consistency.
+            // console.log(`Ensuring static site + route for ${appName}...`);
             await NginxGenerator.generateAppConfig(appName, port);
             await NginxGenerator.updateGatewayConfig(appName, port);
         }
@@ -143,50 +203,24 @@ async function reconcile() {
         console.log('Reloading Nginx...');
         await NginxGenerator.reloadNginx();
 
-        // --- PRUNING LOGIC ---
+        // --- PRUNING LOGIC (FILES) ---
         console.log('Pruning orphaned directories...');
-        // const buildsDir = BUILD_ROOT; // Already defined globally
         if (fs.existsSync(BUILD_ROOT)) {
              const dirs = fs.readdirSync(BUILD_ROOT).filter(f => {
                 const stat = fs.statSync(path.join(BUILD_ROOT, f));
-                return stat.isDirectory() && !f.startsWith('.'); // Ignore .backups and .temp-...
+                return stat.isDirectory() && !f.startsWith('.');
             });
 
             for (const dirName of dirs) {
                 if (!appNames.includes(dirName)) {
                     console.log(`Pruning orphaned directory: ${dirName}`);
                     fs.rmSync(path.join(BUILD_ROOT, dirName), { recursive: true, force: true });
-                    // Also try to remove Nginx configs if they exist
-                    await NginxGenerator.removeConfigs(dirName);
                 }
             }
-        } else {
-             console.log('Builds directory not found, skipping pruning.');
         }
-
-        // Prune orphaned nginx site configs even if the build dir is already gone
-        console.log('Pruning orphaned Nginx site configs/routes...');
-        const desiredApps = new Set(appNames);
-
-        try {
-            const { stdout } = await execAsync(`sudo ls -1 ${SITES_AVAILABLE} 2>/dev/null || true`);
-            const files = stdout.split('\n').map(s => s.trim()).filter(Boolean);
-            const buildFiles = files.filter(f => f.startsWith('build-'));
-            for (const file of buildFiles) {
-                const orphanApp = file.replace(/^build-/, '');
-                const meta = apps[orphanApp];
-                const type = (typeof meta === 'object' && meta && meta.type) ? meta.type : null;
-
-                // Remove if not in ports.json OR if it's a docker app (docker should not have a build-* site)
-                if (!desiredApps.has(orphanApp) || type === 'docker') {
-                    console.log(`Removing orphaned site config: ${file}`);
-                    await execAsync(`sudo rm -f ${SITES_AVAILABLE}/${file} ${SITES_ENABLED}/${file}`);
-                }
-            }
-        } catch (e) {
-            console.warn('Could not prune sites-available:', e.message);
-        }
-
+        
+        // Final Nginx Prune (Specific to Gateway Routes)
+        // ... (Keep existing gateway prune) ...
         try {
             const { stdout } = await execAsync(`sudo ls -1 ${GATEWAY_ROUTES} 2>/dev/null || true`);
             const files = stdout.split('\n').map(s => s.trim()).filter(Boolean);
@@ -198,14 +232,9 @@ async function reconcile() {
                     await execAsync(`sudo rm -f ${GATEWAY_ROUTES}/${file}`);
                 }
             }
-        } catch (e) {
-            console.warn('Could not prune gateway-routes:', e.message);
-        }
+        } catch (e) {}
 
-        // Also prune temp files older than 1 hour? 
-        // For now let's just do known orphans.
-
-        console.log('Reconciliation and Pruning complete!');
+        console.log('System Reconciliation Complete');
     } catch (error) {
         console.error('Reconciliation failed:', error);
     }
