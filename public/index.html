@@ -803,6 +803,7 @@
                         <label for="appName">Application Name</label>
                         <input type="text" id="appName" name="appName" placeholder="e.g. dashboard-v2" required
                             pattern="[a-z0-9]+(-[a-z0-9]+)*">
+                        <div id="appNameError" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.3rem; display: none;"></div>
                     </div>
                     <button type="button" id="nextBtn">Continue to Files</button>
                 </div>
@@ -834,7 +835,8 @@
                     <div class="form-group">
                         <label for="dockerAppName">Application Name</label>
                         <input type="text" id="dockerAppName" name="appName" placeholder="e.g. redis-app" required
-                            pattern="[a-z0-9-]+">
+                            pattern="[a-z0-9]+(-[a-z0-9]+)*">
+                        <div id="dockerAppNameError" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.3rem; display: none;"></div>
                     </div>
 
                     <div id="uploadFields">
@@ -1557,6 +1559,58 @@
                 btn.textContent = originalText;
             }
         };
+
+        // Live Validation & Auto-Correction
+        function setupNameValidation(inputId, errorId) {
+            const input = document.getElementById(inputId);
+            const error = document.getElementById(errorId);
+            
+            if (!input || !error) return;
+
+            input.addEventListener('input', () => {
+                // 1. Auto-convert to lowercase (addresses "Why not uppercase")
+                const original = input.value;
+                const lower = original.toLowerCase();
+                if (original !== lower) {
+                    input.value = lower;
+                }
+
+                const value = input.value;
+                
+                // 2. Real-time validation (addresses "Error before uploading")
+                if (value.length === 0) {
+                    error.style.display = 'none';
+                    input.setCustomValidity('');
+                    return;
+                }
+
+                let params = { valid: true, msg: '' };
+
+                if (value.length < 3) params = { valid: false, msg: 'Name must be at least 3 characters.' };
+                else if (value.length > 50) params = { valid: false, msg: 'Name must be less than 50 characters.' };
+                else if (!/^[a-z0-9]/.test(value)) params = { valid: false, msg: 'Must start with a letter or number.' };
+                else if (!/[a-z0-9]$/.test(value)) {
+                    // Start/End check - if ending with hyphen, it's invalid but common while typing
+                    // We can be lenient or strict. Let's be strict but clear.
+                    if (value.endsWith('-')) params = { valid: false, msg: 'Cannot end with a hyphen.' };
+                    else params = { valid: false, msg: 'Must end with a letter or number.' };
+                }
+                else if (value.includes('--')) params = { valid: false, msg: 'Consecutive hyphens (--) are not allowed.' };
+                else if (!/^[a-z0-9-]+$/.test(value)) params = { valid: false, msg: 'Only letters, numbers, and hyphens allowed.' };
+                
+                if (params.valid) {
+                    error.style.display = 'none';
+                    input.setCustomValidity('');
+                } else {
+                    error.textContent = params.msg;
+                    error.style.display = 'block';
+                    input.setCustomValidity(params.msg);
+                }
+            });
+        }
+
+        setupNameValidation('appName', 'appNameError');
+        setupNameValidation('dockerAppName', 'dockerAppNameError');
 
         loadApps();
         setInterval(loadApps, 15000);
