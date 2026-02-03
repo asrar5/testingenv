@@ -85,8 +85,8 @@ sudo mkdir -p "$NGINX_GATEWAY_ROUTES"
 # Setup Nginx Gateway
 echo "Setting up Nginx Gateway..."
 GATEWAY_CONF="nginx/gateway.conf"
-TARGET_CONF="$NGINX_SITES_AVAILABLE/build-gateway"
-TARGET_LINK="$NGINX_SITES_ENABLED/build-gateway"
+TARGET_CONF="$NGINX_SITES_AVAILABLE/hosting-gateway"
+TARGET_LINK="$NGINX_SITES_ENABLED/hosting-gateway"
 
 if [ -f "$GATEWAY_CONF" ]; then
     # We will use a temporary file to substitute variables

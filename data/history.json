@@ -1,5 +1,33 @@
 [
   {
+    "timestamp": "2026-02-03T10:46:19.497Z",
+    "action": "docker_deploy",
+    "appName": "hhhh",
+    "owner": "asrar",
+    "port": 3321,
+    "image": "php-modern-app:latest",
+    "category": "backend"
+  },
+  {
+    "timestamp": "2026-02-03T10:45:31.387Z",
+    "action": "upload",
+    "appName": "newtest",
+    "owner": "asrar",
+    "port": 3320
+  },
+  {
+    "timestamp": "2026-02-03T10:45:09.191Z",
+    "action": "delete",
+    "appName": "task",
+    "owner": "asrar"
+  },
+  {
+    "timestamp": "2026-02-03T10:45:05.697Z",
+    "action": "delete",
+    "appName": "hhhh",
+    "owner": "asrar"
+  },
+  {
     "timestamp": "2026-01-23T13:10:19.511Z",
     "action": "docker_start",
     "appName": "task",
