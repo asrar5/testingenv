@@ -18,12 +18,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: SSH and Deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
           eval $(ssh-agent -s)
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > .ssh_key
-          # Ensure file ends with newline
-          [ -n "$(tail -c1 .ssh_key)" ] && echo >> .ssh_key
+          
+          # Use printf to avoid shell expansion issues with the secret
+          printf "%s\n" "$SSH_PRIVATE_KEY" | tr -d '\r' > .ssh_key
+          
           chmod 600 .ssh_key
           ssh-add .ssh_key
           rm .ssh_key
