@@ -282,8 +282,9 @@ app.delete('/api/apps/:appName', requireAuth, async (req, res) => {
         console.log(`[${appName}] Reloading Nginx...`);
         await NginxGenerator.reloadNginx();
 
-        // 6. Log History
-        await HistoryManager.log('delete', appName, req.user.username);
+        // 6. Delete History
+        console.log(`[${appName}] Removing history...`);
+        await HistoryManager.deleteAppHistory(appName);
 
         console.log(`[${appName}] ✅ Deletion completed successfully\n`);
         res.json({ success: true, message: `App '${appName}' deleted successfully. Port ${port} has been freed.` });
