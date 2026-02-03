@@ -8,7 +8,6 @@ jobs:
   deploy:
     name: Deploy to Server
     runs-on: self-hosted
-    if: runner.name == 'aibit-OptiPlex-3000'
     steps:
       - name: Fix Workspace Permissions
         run: |
