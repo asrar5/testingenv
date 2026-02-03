@@ -24,8 +24,10 @@ jobs:
           mkdir -p ~/.ssh
           eval $(ssh-agent -s)
           
-          # Use printf to avoid shell expansion issues with the secret
-          printf "%s\n" "$SSH_PRIVATE_KEY" | tr -d '\r' > .ssh_key
+          # Fix: ensure key has proper newlines and trailing newline
+          echo "$SSH_PRIVATE_KEY" > .ssh_key 
+          # Ensure file ends with newline
+          echo "" >> .ssh_key
           
           chmod 600 .ssh_key
           ssh-add .ssh_key
