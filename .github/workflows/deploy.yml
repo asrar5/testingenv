@@ -21,7 +21,9 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           eval $(ssh-agent -s)
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > .ssh_key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > .ssh_key
+          # Ensure file ends with newline
+          [ -n "$(tail -c1 .ssh_key)" ] && echo >> .ssh_key
           chmod 600 .ssh_key
           ssh-add .ssh_key
           rm .ssh_key
