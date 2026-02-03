@@ -237,8 +237,29 @@
         @media (max-width: 860px) {
             .shell { max-width: 500px; padding: 20px; }
             .card-grid { grid-template-columns: 1fr; min-height: auto; }
-            .card-aside { display: none; } /* Hide aside on mobile for cleaner look */
-            .card-form { padding: 40px; }
+            
+            /* Mobile: Show brand as header, hide heavy visuals */
+            .card-aside { 
+                display: flex;
+                flex-direction: row;
+                padding: 30px 40px 0;
+                background: transparent;
+                border: none;
+                min-height: auto;
+            }
+            
+            .card-aside::before,
+            .aside-content,
+            .aside-footer { display: none; }
+            
+            .card-form { padding: 30px 40px 40px; }
+        }
+        
+        @media (max-width: 480px) {
+            .shell { padding: 12px; }
+            .card-aside { padding: 24px 24px 0; }
+            .card-form { padding: 20px 24px 30px; }
+            .form-title { font-size: 1.35rem; }
         }
     </style>
 </head>
