@@ -8,12 +8,13 @@ jobs:
   deploy:
     name: Deploy to Server
     runs-on: self-hosted
+    if: runner.name == 'aibit-OptiPlex-3000'
     steps:
       - name: Fix Workspace Permissions
         run: |
           echo "Fixing permissions on workspace..."
           if [ -d "$GITHUB_WORKSPACE" ]; then
-             sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+            sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
           fi
         continue-on-error: true
 
@@ -28,46 +29,30 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            # Stop script on error
             set -e
 
-            # Go to project folder
+            echo "Navigating to project folder..."
             cd ${{ secrets.PROJECT_PATH }}
 
-            # Pull latest code
             echo "Pulling latest changes..."
             git fetch --all
             git reset --hard origin/main
 
-            # Install dependencies
             echo "Installing dependencies..."
             npm install --production
 
-            # Create necessary directories
             echo "Creating required directories..."
-            mkdir -p uploads
-            mkdir -p builds
-            mkdir -p data
+            mkdir -p uploads builds data
 
-            # Run setup script (Configure Nginx/Paths) from existing .env
-            # Note: This requires the user to have passwordless sudo or appropriate permissions
-            echo "Running setup configuration..."
-            chmod +x setup.sh
-            # We skip setup.sh in the automated flow if it requires interactive sudo.
-            # Assuming the server is already set up, we primarily need to restart the app.
-            # Uncomment the next line if you have passwordless sudo configured for the user:
-            # ./setup.sh
-
-            # Restart Application via PM2
-            echo "Restarting application..."
+            echo "Restarting application via PM2..."
             if command -v pm2 >/dev/null; then
-                pm2 restart build-server || pm2 start server.js --name "build-server"
-                pm2 save
+              pm2 restart build-server || pm2 start server.js --name "build-server"
+              pm2 save
             else
-                echo "PM2 not found. Installing..."
-                sudo npm install -g pm2
-                pm2 start server.js --name "build-server"
-                pm2 save
+              echo "PM2 not found. Installing..."
+              sudo npm install -g pm2
+              pm2 start server.js --name "build-server"
+              pm2 save
             fi
 
             echo "Deployment Complete!"
