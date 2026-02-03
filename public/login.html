@@ -7,88 +7,103 @@
     <title>Login - Testing Environment</title>
     <style>
         :root {
-            /* Match dashboard theme */
             --bg: #f8fafc;
             --bg-2: #ffffff;
-            --card: rgba(255, 255, 255, 0.9);
-            --border: rgba(17, 24, 39, 0.10);
+            --card: rgba(255, 255, 255, 0.98);
+            --border: rgba(17, 24, 39, 0.08);
             --text: rgba(17, 24, 39, 0.92);
-            --muted: rgba(17, 24, 39, 0.60);
-            filter: brightness(1.02);
-            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.22);
+            --muted: rgba(17, 24, 39, 0.55);
+            --accent: #4f46e5;
         }
 
-        #submitBtn:active {
-            transform: translateY(0px);
-            filter: brightness(0.99);
+        * { box-sizing: border-box; }
+        html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:var(--text); background:var(--bg); }
+
+        .shell {
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:48px 20px;
+            max-width:1100px;
+            margin:0 auto;
         }
 
-        #submitBtn:disabled {
-            opacity: 0.75;
-            cursor: not-allowed;
-            transform: none;
-            filter: none;
+        .card {
+            width:100%;
+            background: linear-gradient(180deg, var(--card), var(--bg-2));
+            border:1px solid var(--border);
+            border-radius:12px;
+            box-shadow:0 10px 30px rgba(2,6,23,0.06);
+            overflow:hidden;
+            animation: cardIn .36s ease both;
         }
 
-        .btn-icon {
-            width: 18px;
-            height: 18px;
+        .card-grid {
+            display:grid;
+            grid-template-columns: 420px 1fr;
+            gap:0;
+            min-height: 360px;
         }
 
-        .animate-spin {
-            animation: spin 1s linear infinite;
+        .card-aside {
+            padding:34px 36px;
+            background: linear-gradient(180deg, rgba(79,70,229,0.06), rgba(255,255,255,0));
+            border-right:1px solid rgba(17,24,39,0.03);
+            display:flex;
+            flex-direction:column;
+            gap:18px;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        .brand { display:flex; gap:12px; align-items:center; }
+        .mark svg { width:46px; height:46px; color:var(--accent); }
+        .brand-title strong { display:block; font-size:1.05rem; }
+        .brand-title span { font-size:0.85rem; color:var(--muted); }
 
-        @keyframes cardIn {
-            0% {
-                opacity: 0;
-                transform: translateY(26px) scale(0.975);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
+        .aside-chip { display:inline-flex; gap:8px; align-items:center; font-size:0.85rem; color:var(--muted); }
+        .aside-chip-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; display:inline-block; }
 
-        .fineprint {
-            margin-top: 16px;
-            text-align: center;
-            font-size: 0.78rem;
-            color: var(--muted);
-        }
+        .aside-title { margin:6px 0 0; font-size:1.6rem; }
+        .aside-subtitle { margin:0; color:var(--muted); }
 
-        .fineprint-inline {
-            margin-top: 16px;
-            text-align: left;
-        }
+        .aside-highlights { list-style:none; padding:0; margin:18px 0 0; display:grid; gap:10px; }
+        .aside-highlights li { display:flex; gap:10px; align-items:flex-start; color:var(--muted); }
+        .aside-highlights svg { width:18px; height:18px; color:var(--accent); margin-top:4px; }
+
+        .card-form { padding:36px 40px; display:flex; flex-direction:column; justify-content:center; gap:12px; }
+        .form-title { font-size:1.15rem; font-weight:600; }
+        .form-subtitle { color:var(--muted); margin-bottom:8px; }
+
+        label { display:block; font-size:0.85rem; margin-bottom:6px; color:var(--muted); }
+        .field { display:flex; align-items:center; gap:10px; border:1px solid rgba(17,24,39,0.06); padding:10px 12px; border-radius:8px; background:rgba(255,255,255,0.6); }
+        .field svg { width:18px; height:18px; color:rgba(17,24,39,0.38); }
+        input { border:0; outline:none; font-size:0.95rem; flex:1; background:transparent; color:var(--text); }
+        .pw-toggle { border:0; background:none; color:var(--accent); cursor:pointer; font-size:0.85rem; }
+
+        .actions { margin-top:16px; display:flex; justify-content:flex-end; }
+        button#submitBtn { display:inline-flex; gap:8px; align-items:center; padding:10px 16px; background:var(--accent); color:white; border:0; border-radius:10px; cursor:pointer; font-weight:600; box-shadow:0 6px 18px rgba(79,70,229,0.18); }
+        button#submitBtn:active { transform:translateY(1px); }
+
+        .error { display:none; align-items:center; gap:10px; background:rgba(254, 226, 226, 0.9); color:#7f1d1d; border:1px solid rgba(127,29,29,0.12); padding:10px 12px; border-radius:8px; margin:8px 0; }
+        .error svg { width:18px; height:18px; color:#7f1d1d; }
+
+        .fineprint { margin-top:18px; text-align:center; font-size:0.82rem; color:var(--muted); }
+
+        .btn-icon { width:18px; height:18px; }
+        .animate-spin { animation: spin 1s linear infinite; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes cardIn { 0% { opacity:0; transform:translateY(26px) scale(0.98); } 100% { opacity:1; transform:none; } }
 
         @media (max-width: 860px) {
-            .shell {
-                max-width: 560px;
-            }
-
-            .card-grid {
-                grid-template-columns: 1fr;
-                min-height: unset;
-            }
-
-            .card-aside {
-                border-right: none;
-                border-bottom: 1px solid rgba(17, 24, 39, 0.08);
-            }
+            .shell { max-width:680px; padding:28px; }
+            .card-grid { grid-template-columns: 1fr; }
+            .card-aside { border-right: none; border-bottom:1px solid rgba(17,24,39,0.06); }
         }
 
         @media (max-width: 420px) {
-            .card-aside,
-            .card-form {
-                padding: 24px 18px;
-            }
+            .card-aside, .card-form { padding:20px; }
+            .card-grid { gap:0; }
         }
     </style>
 </head>
