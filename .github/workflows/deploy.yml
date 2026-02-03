@@ -17,48 +17,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: SSH and Deploy
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Deploy Locally
         run: |
-          mkdir -p ~/.ssh
-          eval $(ssh-agent -s)
+          echo "Deploying on self-hosted runner (Local)..."
           
-          # Fix: ensure key has proper newlines and trailing newline
-          echo "$SSH_PRIVATE_KEY" > .ssh_key 
-          # Ensure file ends with newline
-          echo "" >> .ssh_key
-          
-          chmod 600 .ssh_key
-          ssh-add .ssh_key
-          rm .ssh_key
-          
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
-            set -e
+          echo "Installing dependencies..."
+          npm install --production
 
-            echo "Navigating to project folder..."
-            cd ${{ secrets.PROJECT_PATH }}
+          echo "Creating required directories..."
+          mkdir -p uploads builds data
 
-            echo "Pulling latest changes..."
-            git fetch --all
-            git reset --hard origin/main
+          echo "Restarting application via PM2..."
+          if command -v pm2 >/dev/null; then
+            sudo pm2 restart build-hosting-platform || sudo pm2 start server.js --name "build-hosting-platform" --time
+            sudo pm2 save
+          else
+            echo "PM2 not found. Installing..."
+            sudo npm install -g pm2
+            sudo pm2 start server.js --name "build-hosting-platform" --time
+            sudo pm2 save
+          fi
 
-            echo "Installing dependencies..."
-            npm install --production
-
-            echo "Creating required directories..."
-            mkdir -p uploads builds data
-
-            echo "Restarting application via PM2..."
-            if command -v pm2 >/dev/null; then
-              pm2 restart build-server || pm2 start server.js --name "build-server"
-              pm2 save
-            else
-              echo "PM2 not found. Installing..."
-              sudo npm install -g pm2
-              pm2 start server.js --name "build-server"
-              pm2 save
-            fi
-
-            echo "Deployment Complete!"
-          '
+          echo "Deployment Complete!"
