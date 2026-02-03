@@ -84,6 +84,53 @@ sudo mkdir -p "$NGINX_GATEWAY_ROUTES"
 
 # Setup Nginx Gateway
 echo "Setting up Nginx Gateway..."
+
+# setup_sudoers function to auto-resolve permission issues
+configure_sudoers() {
+    local USERNAME=$(whoami)
+    local SUDOORS_FILE="/etc/sudoers.d/hosting-platform-$USERNAME"
+    
+    if [ "$EUID" -ne 0 ]; then 
+        echo "Please run setup.sh with sudo to automatically configure permissions."
+        return
+    fi
+
+    # Do not run if we are root (unless we are configuring for a specific user, but usually we run setup as the user with sudo)
+    # Actually, a better pattern is: 
+    # if I am root, who is the real user? $SUDO_USER
+    
+    if [ -n "$SUDO_USER" ]; then
+        USERNAME="$SUDO_USER"
+    fi
+
+    echo "Configuring passwordless sudo for user: $USERNAME"
+    
+    # List of commands required
+    CMDS="/usr/bin/docker,/usr/bin/lsof,/bin/chmod,/bin/rm,/bin/mv,/bin/ln,/bin/mkdir,/bin/grep,/usr/sbin/nginx,/bin/systemctl,/usr/bin/systemctl"
+    
+    echo "$USERNAME ALL=(ALL) NOPASSWD: $CMDS" > "$SUDOORS_FILE"
+    chmod 0440 "$SUDOORS_FILE"
+    
+    echo "Sudo permissions configured in $SUDOORS_FILE"
+}
+
+# Attempt to configure sudoers if running as root
+if [ "$EUID" -eq 0 ]; then
+    configure_sudoers
+    
+    # Also define the real user for permission fixing later
+    REAL_USER=$(logname 2>/dev/null || echo $SUDO_USER)
+    if [ -z "$REAL_USER" ]; then REAL_USER=$(whoami); fi
+else
+    REAL_USER=$(whoami)
+    # Suggest running with sudo if we suspect limits (check a simple sudo command)
+    if ! sudo -n true 2>/dev/null; then
+         echo "${RED}Warning: Current user does not have passwordless sudo access.${NC}"
+         echo "To automatically resolve this, run this script with sudo:"
+         echo "  sudo ./setup.sh"
+    fi
+fi
+
 GATEWAY_CONF="nginx/gateway.conf"
 TARGET_CONF="$NGINX_SITES_AVAILABLE/hosting-gateway"
 TARGET_LINK="$NGINX_SITES_ENABLED/hosting-gateway"
@@ -125,3 +172,13 @@ printf "${GREEN}Setup Complete!${NC}\n"
 echo "To start the server:"
 echo "  sudo node server.js"
 echo ""
+
+# Fix permissions for the real user
+if [ -n "$REAL_USER" ] && [ "$REAL_USER" != "root" ]; then
+    echo "Fixing permissions for user: $REAL_USER"
+    chown -R "$REAL_USER:$REAL_USER" "$BUILD_ROOT" "$UPLOAD_ROOT" "$BACKUP_ROOT"
+    chown -R "$REAL_USER:$REAL_USER" "$AUTH_PORTS_FILE" "$AUTH_HISTORY_FILE" "$AUTH_USERS_FILE" 2>/dev/null || true
+    chown -R "$REAL_USER:$REAL_USER" "$(dirname "$AUTH_PORTS_FILE")"
+fi
+
+echo "Setup complete! Please restart the server."

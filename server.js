@@ -342,6 +342,52 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Startup Integrity & Permission Repair
+(async function startupCheck() {
+    try {
+        // 1. Check Sudo Access
+        await execAsync('sudo -n true');
+        console.log('Sudo permissions: OK');
+        
+        // 2. Auto-Fix Permissions logic
+        const currentUser = process.env.USER || (await execAsync('whoami')).stdout.trim();
+        const directoriesToFix = [
+            path.join(__dirname, 'data'),
+            path.join(process.env.BUILD_ROOT || path.join(__dirname, 'builds')),
+            process.env.UPLOAD_ROOT || path.join(__dirname, 'uploads')
+        ];
+
+        console.log(`Ensuring ownership for user '${currentUser}' on: data, builds, uploads...`);
+        
+        // Fix ownership recursively
+        // We do this individually to catch errors but proceed
+        for (const dir of directoriesToFix) {
+             if (fs.existsSync(dir)) {
+                 try {
+                     await execAsync(`sudo chown -R ${currentUser}:${currentUser} "${dir}"`);
+                 } catch (e) {
+                     console.warn(`Warning: Failed to chown ${dir}: ${e.message}`);
+                 }
+             }
+        }
+
+        // 3. Clean stale lockfiles
+        const dataPath = path.join(__dirname, 'data');
+        if (fs.existsSync(dataPath)) {
+             try {
+                await execAsync(`sudo rm -rf "${dataPath}"/*.lock`);
+                console.log('Stale lockfiles cleaned.');
+             } catch (e) {
+                 console.warn('Warning: Could not clean lockfiles:', e.message);
+             }
+        }
+
+    } catch (e) {
+        console.error('\n\x1b[31mCRITICAL ERROR: Passwordless sudo is not configured.\x1b[0m');
+        console.error('To automatically resolve this, stop the server and run: \x1b[33msudo ./setup.sh\x1b[0m\n');
+    }
+})();
+
 app.listen(PORT, HOST, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`Upload UI: http://localhost:${PORT}`);

@@ -1,8 +1,5 @@
-node_modules/
+node_modules
+builds
+uploads
 .env
-builds/
-uploads/*
-!uploads/.gitkeep
-# data/ (uncommenting to track data config files)
-logs/
 .DS_Store
