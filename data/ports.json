@@ -6,26 +6,12 @@
     "category": "backend",
     "uploadedAt": "2026-02-03T10:46:18.423Z"
   },
-  "newtest2": {
-    "port": 3320,
-    "owner": "asrar",
-    "type": "zip",
-    "category": "frontend",
-    "uploadedAt": "2026-02-03T12:05:05.305Z"
-  },
   "dockertesting": {
     "port": 3322,
     "owner": "asrar",
     "type": "docker",
     "category": "backend",
     "uploadedAt": "2026-02-03T12:06:09.916Z"
-  },
-  "newtest123": {
-    "port": 3323,
-    "owner": "asrar",
-    "type": "zip",
-    "category": "frontend",
-    "uploadedAt": "2026-02-03T12:37:53.931Z"
   },
   "newtestdocker": {
     "port": 3324,
@@ -34,26 +20,12 @@
     "category": "backend",
     "uploadedAt": "2026-02-03T12:40:04.598Z"
   },
-  "newtestqwe": {
-    "port": 3325,
-    "owner": "asrar",
-    "type": "zip",
-    "category": "frontend",
-    "uploadedAt": "2026-02-03T12:53:00.038Z"
-  },
   "asdfsdf": {
     "port": 3326,
     "owner": "asrar",
     "type": "docker",
     "category": "backend",
     "uploadedAt": "2026-02-03T12:53:51.253Z"
-  },
-  "newtest456": {
-    "port": 3327,
-    "owner": "asrar",
-    "type": "zip",
-    "category": "frontend",
-    "uploadedAt": "2026-02-03T12:56:56.346Z"
   },
   "sdalfasdifh": {
     "port": 3328,
