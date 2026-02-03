@@ -20,8 +20,11 @@ jobs:
       - name: SSH and Deploy
         run: |
           mkdir -p ~/.ssh
-          eval `ssh-agent -s`
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          eval $(ssh-agent -s)
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > .ssh_key
+          chmod 600 .ssh_key
+          ssh-add .ssh_key
+          rm .ssh_key
           
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
             set -e
