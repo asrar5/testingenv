@@ -17,93 +17,228 @@
         }
 
         * { box-sizing: border-box; }
-        html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:var(--text); background:var(--bg); }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            color: var(--text);
+            background-color: var(--bg);
+            /* Add attractive background pattern */
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.08) 0px, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(79, 70, 229, 0.08) 0px, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
 
         .shell {
-            min-height:100vh;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:48px 20px;
-            max-width:1100px;
-            margin:0 auto;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 20px;
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
         .card {
-            width:100%;
+            width: 100%;
             background: linear-gradient(180deg, var(--card), var(--bg-2));
-            border:1px solid var(--border);
-            border-radius:12px;
-            box-shadow:0 10px 30px rgba(2,6,23,0.06);
-            overflow:hidden;
-            animation: cardIn .36s ease both;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .card-grid {
-            display:grid;
-            grid-template-columns: 420px 1fr;
-            gap:0;
-            min-height: 360px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            min-height: 480px;
         }
 
+        /* Simplified Aside - visual focused */
         .card-aside {
-            padding:34px 36px;
-            background: linear-gradient(180deg, rgba(79,70,229,0.06), rgba(255,255,255,0));
-            border-right:1px solid rgba(17,24,39,0.03);
-            display:flex;
-            flex-direction:column;
-            gap:18px;
+            padding: 40px;
+            background: rgba(249, 250, 251, 0.8);
+            border-right: 1px solid rgba(17, 24, 39, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Decorative circle behind aside content */
+        .card-aside::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
         }
 
-        .brand { display:flex; gap:12px; align-items:center; }
-        .mark svg { width:46px; height:46px; color:var(--accent); }
-        .brand-title strong { display:block; font-size:1.05rem; }
-        .brand-title span { font-size:0.85rem; color:var(--muted); }
+        .brand { 
+            position: relative;
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            z-index: 1;
+        }
+        .mark svg { width: 40px; height: 40px; color: var(--accent); }
+        .brand-title { font-weight: 600; font-size: 1.1rem; letter-spacing: -0.01em; }
 
-        .aside-chip { display:inline-flex; gap:8px; align-items:center; font-size:0.85rem; color:var(--muted); }
-        .aside-chip-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; display:inline-block; }
+        .aside-content { 
+            position: relative; 
+            z-index: 1;
+            margin-top: auto; 
+            margin-bottom: auto;
+        }
+        
+        .aside-title { 
+            margin: 0 0 12px; 
+            font-size: 2rem; 
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .aside-subtitle { 
+            margin: 0; 
+            font-size: 1rem; 
+            line-height: 1.5;
+            color: var(--muted); 
+            max-width: 260px;
+        }
 
-        .aside-title { margin:6px 0 0; font-size:1.6rem; }
-        .aside-subtitle { margin:0; color:var(--muted); }
+        .aside-footer {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
 
-        .aside-highlights { list-style:none; padding:0; margin:18px 0 0; display:grid; gap:10px; }
-        .aside-highlights li { display:flex; gap:10px; align-items:flex-start; color:var(--muted); }
-        .aside-highlights svg { width:18px; height:18px; color:var(--accent); margin-top:4px; }
+        /* Simplified Form */
+        .card-form { 
+            padding: 40px 60px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            gap: 20px; 
+        }
+        
+        .form-header { text-align: left; margin-bottom: 8px; }
+        .form-title { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; color: #1e293b; }
 
-        .card-form { padding:36px 40px; display:flex; flex-direction:column; justify-content:center; gap:12px; }
-        .form-title { font-size:1.15rem; font-weight:600; }
-        .form-subtitle { color:var(--muted); margin-bottom:8px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.85rem; font-weight: 500; color: #475569; margin-left: 2px; }
+        
+        .field { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            border: 1px solid rgba(226, 232, 240, 1); 
+            padding: 12px 16px; 
+            border-radius: 10px; 
+            background: #fff; 
+            transition: all 0.2s ease;
+        }
+        
+        .field:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
 
-        label { display:block; font-size:0.85rem; margin-bottom:6px; color:var(--muted); }
-        .field { display:flex; align-items:center; gap:10px; border:1px solid rgba(17,24,39,0.06); padding:10px 12px; border-radius:8px; background:rgba(255,255,255,0.6); }
-        .field svg { width:18px; height:18px; color:rgba(17,24,39,0.38); }
-        input { border:0; outline:none; font-size:0.95rem; flex:1; background:transparent; color:var(--text); }
-        .pw-toggle { border:0; background:none; color:var(--accent); cursor:pointer; font-size:0.85rem; }
+        .field svg { width: 20px; height: 20px; color: #94a3b8; transition: color 0.2s; }
+        .field:focus-within svg { color: var(--accent); }
+        
+        input { 
+            border: 0; 
+            outline: none; 
+            font-size: 1rem; 
+            flex: 1; 
+            background: transparent; 
+            color: var(--text); 
+        }
+        
+        input::placeholder { color: #cbd5e1; }
 
-        .actions { margin-top:16px; display:flex; justify-content:flex-end; }
-        button#submitBtn { display:inline-flex; gap:8px; align-items:center; padding:10px 16px; background:var(--accent); color:white; border:0; border-radius:10px; cursor:pointer; font-weight:600; box-shadow:0 6px 18px rgba(79,70,229,0.18); }
-        button#submitBtn:active { transform:translateY(1px); }
+        .pw-toggle { 
+            border: none; 
+            background: none; 
+            color: #64748b; 
+            cursor: pointer; 
+            font-size: 0.85rem; 
+            font-weight: 500;
+            padding: 4px;
+        }
+        .pw-toggle:hover { color: var(--text); }
 
-        .error { display:none; align-items:center; gap:10px; background:rgba(254, 226, 226, 0.9); color:#7f1d1d; border:1px solid rgba(127,29,29,0.12); padding:10px 12px; border-radius:8px; margin:8px 0; }
-        .error svg { width:18px; height:18px; color:#7f1d1d; }
+        button#submitBtn { 
+            margin-top: 10px;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            width: 100%;
+            padding: 14px; 
+            background: var(--accent); 
+            color: white; 
+            border: 0; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+        }
+        
+        button#submitBtn:hover { background: #4338ca; transform: translateY(-1px); }
+        button#submitBtn:active { transform: translateY(0); }
 
-        .fineprint { margin-top:18px; text-align:center; font-size:0.82rem; color:var(--muted); }
+        .error { 
+            display: none; 
+            align-items: center; 
+            gap: 8px; 
+            background: #fef2f2; 
+            color: #ef4444; 
+            border: 1px solid #fee2e2; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-size: 0.9rem;
+        }
 
-        .btn-icon { width:18px; height:18px; }
+        .fineprint { margin-top: auto; text-align: center; font-size: 0.8rem; color: #94a3b8; }
+        
+        .btn-icon { width: 20px; height: 20px; }
         .animate-spin { animation: spin 1s linear infinite; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes cardIn { 0% { opacity:0; transform:translateY(26px) scale(0.98); } 100% { opacity:1; transform:none; } }
+        @keyframes cardIn { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
 
         @media (max-width: 860px) {
-            .shell { max-width:680px; padding:28px; }
-            .card-grid { grid-template-columns: 1fr; }
-            .card-aside { border-right: none; border-bottom:1px solid rgba(17,24,39,0.06); }
-        }
-
-        @media (max-width: 420px) {
-            .card-aside, .card-form { padding:20px; }
-            .card-grid { gap:0; }
+            .shell { max-width: 500px; padding: 20px; }
+            .card-grid { grid-template-columns: 1fr; min-height: auto; }
+            .card-aside { display: none; } /* Hide aside on mobile for cleaner look */
+            .card-form { padding: 40px; }
         }
     </style>
 </head>
@@ -113,6 +248,7 @@
     <main class="shell">
         <section class="card" aria-label="Sign in">
             <div class="card-grid">
+                <!-- Left Panel: Brand & Welcome -->
                 <aside class="card-aside">
                     <div class="brand">
                         <div class="mark" aria-hidden="true">
@@ -120,45 +256,25 @@
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
                         </div>
-                        <div class="brand-title">
-                            <strong>Testing Environment</strong>
-                            <span>Secure access portal</span>
-                        </div>
+                        <div class="brand-title">Testing Env</div>
                     </div>
 
-                    <div class="aside-chip" aria-hidden="true">
-                        <span class="aside-chip-dot"></span>
-                        <span>Deployments live · Secure by design</span>
+                    <div class="aside-content">
+                        <h1 class="aside-title">Streamline your deployment.</h1>
+                        <p class="aside-subtitle">Access your testing environments and build history in one secure place.</p>
                     </div>
 
-                    <h1 class="aside-title">Welcome back.</h1>
-                    <p class="aside-subtitle">Sign in to manage your testing deployments and builds, all in one place.</p>
-
-                    <ul class="aside-highlights" aria-hidden="true">
-                        <li>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span>Track build and deployment history at a glance.</span>
-                        </li>
-                        <li>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span>Quickly switch between testing environments.</span>
-                        </li>
-                        <li>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span>Secure access for your team only.</span>
-                        </li>
-                    </ul>
+                    <div class="aside-footer">
+                        <span class="status-dot"></span>
+                        <span>System Operational</span>
+                    </div>
                 </aside>
 
+                <!-- Right Panel: Login Form -->
                 <div class="card-form">
-                    <div class="form-title">Sign in</div>
-                    <div class="form-subtitle">Continue to the dashboard.</div>
+                    <div class="form-header">
+                        <div class="form-title">Log in</div>
+                    </div>
 
                     <div id="errorMsg" class="error" role="alert" aria-live="polite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -166,25 +282,25 @@
                             <path d="M12 8v5"></path>
                             <path d="M12 16h.01"></path>
                         </svg>
-                        <span>Invalid username or password</span>
+                        <span>Invalid credentials</span>
                     </div>
 
                     <form id="loginForm">
-                        <div>
+                        <div class="input-group">
                             <label for="username">Username</label>
                             <div class="field">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
                                 </svg>
-                                <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+                                <input type="text" id="username" name="username" placeholder="username" required autocomplete="username">
                             </div>
                         </div>
 
-                        <div>
+                        <div class="input-group">
                             <label for="password">Password</label>
                             <div class="field">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
@@ -193,18 +309,8 @@
                             </div>
                         </div>
 
-                        <div class="actions">
-                            <button type="submit" id="submitBtn">
-                                <span>Sign In</span>
-                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path d="M5 12h14"></path>
-                                    <path d="M12 5l7 7-7 7"></path>
-                                </svg>
-                            </button>
-                        </div>
+                        <button type="submit" id="submitBtn">Sign In</button>
                     </form>
-
-                    <div class="fineprint fineprint-inline">&copy; 2026 Testing Environment</div>
                 </div>
             </div>
         </section>
@@ -218,7 +324,7 @@
         const passwordInput = document.getElementById('password');
         const pwToggle = document.getElementById('pwToggle');
 
-        // Prefill last username (UX only)
+        // Prefill last username
         const lastUsername = localStorage.getItem('lastUsername');
         if (lastUsername && usernameInput && !usernameInput.value) {
             usernameInput.value = lastUsername;
@@ -250,8 +356,7 @@
             if (loading) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = `
-                    <span>Signing in...</span>
-                    <svg class="btn-icon animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <svg class="btn-icon animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
                     </svg>
                 `;
@@ -263,7 +368,6 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             setErrorVisible(false);
             setLoading(true);
 
