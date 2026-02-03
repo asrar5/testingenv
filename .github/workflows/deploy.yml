@@ -1,0 +1,41 @@
+name: Deploy to Production
+on:
+  push:
+    branches: [ "main" ]
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: self-hosted
+    steps:
+      - name: Fix Workspace Permissions
+        run: |
+          echo "Fixing permissions on workspace..."
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+          fi
+        continue-on-error: true
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Locally
+        run: |
+          echo "Deploying on self-hosted runner (Local)..."
+          
+          echo "Installing dependencies..."
+          npm install --production
+
+          echo "Creating required directories..."
+          mkdir -p uploads builds data
+
+          echo "Restarting application via PM2..."
+          if command -v pm2 >/dev/null; then
+            sudo pm2 restart build-hosting-platform || sudo pm2 start server.js --name "build-hosting-platform" --time
+            sudo pm2 save
+          else
+            echo "PM2 not found. Installing..."
+            sudo npm install -g pm2
+            sudo pm2 start server.js --name "build-hosting-platform" --time
+            sudo pm2 save
+          fi
+
+          echo "Deployment Complete!"
