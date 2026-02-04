@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Testing Environment</title>
+    <!-- Cache buster: v20250204-003 -->
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Testing Env</h1>
+            <div id="userInfo" class="user-pill"></div>
+            <div class="header-meta">Updated: <span id="cacheVersion"></span></div>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-item active" data-view="dashboard">Dashboard</button>
+            <button class="nav-item" data-view="deploy">Deploy App</button>
+            <button class="nav-item" data-view="activity">Activity</button>
+            <button class="nav-item" id="navAdmin" style="display:none" data-view="admin">Users</button>
+            <button class="nav-item" data-view="settings">Settings</button>
+        </nav>
+
+        <!-- View: Dashboard (Stats + Apps) -->
+        <div id="view-dashboard" class="view-section active">
+            <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800;">Your Applications</h2>
+                <div id="breadcrumbs" style="display: none; font-size: 0.9rem; color: var(--text-muted);"></div>
+            </div>
+
+            <div id="statsRow" class="stats-grid" style="display: none;"></div>
+
+            <div id="viewContainer">
+                <div id="appsList" class="card" style="padding: 0;">
+                    <div style="padding: 3rem; text-align: center; color: var(--text-muted)">Initialising...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Deploy -->
+        <div id="view-deploy" class="view-section">
+            <div class="card upload-card">
+                <div class="tabs">
+                    <div class="tab active" data-tab="zip">ZIP Upload(Build)</div>
+                    <div class="tab" data-tab="docker">Docker Image</div>
+                </div>
+    
+                <div id="zipTab" class="tab-content active">
+                    <div id="step1">
+                        <div class="form-group">
+                            <label for="appName">Application Name</label>
+                            <input type="text" id="appName" name="appName" placeholder="e.g. dashboard-v2" required
+                                pattern="[a-z0-9]+(-[a-z0-9]+)*">
+                            <div id="appNameError" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.3rem; display: none;"></div>
+                        </div>
+                        <button type="button" id="nextBtn">Continue to Files</button>
+                    </div>
+    
+                    <div id="step2" style="display: none;">
+                        <div
+                            style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                            <span id="displayAppName" style="font-weight: 700; color: var(--primary)"></span>
+                            <button type="button" id="backBtn" class="btn-ghost"
+                                style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Change Name</button>
+                        </div>
+                        <form id="uploadForm">
+                            <div class="form-group">
+                                <div class="drop-zone" id="dropZone">
+                                    <p>Drag & drop ZIP file here or click to select</p>
+                                    <input type="file" id="fileInput" name="file" accept=".zip" style="display: none"
+                                        required>
+                                    <p id="fileName" style="margin-top: 0.5rem; font-weight: 600; color: var(--primary)">
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="submit" id="submitBtn">Deploy to Production</button>
+                        </form>
+                    </div>
+                </div>
+    
+                <div id="dockerTab" class="tab-content">
+                    <form id="dockerForm">
+                        <div class="form-group">
+                            <label for="dockerAppName">Application Name</label>
+                            <input type="text" id="dockerAppName" name="appName" placeholder="e.g. redis-app" required
+                                pattern="[a-z0-9]+(-[a-z0-9]+)*">
+                            <div id="dockerAppNameError" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.3rem; display: none;"></div>
+                        </div>
+    
+                        <div id="uploadFields">
+                            <div class="form-group">
+                                <label>Docker Image File (.tar/.tar.gz)</label>
+                                <div class="drop-zone" id="dockerDropZone">
+                                    <p>Drag & drop .tar/.tar.gz file here or click to select</p>
+                                    <input type="file" id="dockerFileInput" name="file" accept=".tar,.tar.gz,.tgz,application/x-tar,application/gzip" style="display: none"
+                                        required>
+                                    <p id="dockerFileName"
+                                        style="margin-top: 0.5rem; font-weight: 600; color: var(--primary)"></p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label for="dockerCategory">Category</label>
+                                <select id="dockerCategory" name="category">
+                                    <option value="frontend">Frontend</option>
+                                    <option value="backend" selected>Backend</option>
+                                    <option value="fullstack">Full Application</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="internalPort">Internal Port</label>
+                                <input type="text" id="internalPort" name="internalPort" placeholder="80" value="80">
+                            </div>
+                        </div>
+                        
+                        <!-- Debug info -->
+                        <div style="margin: 1rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; font-size: 0.8rem; color: #666;">
+                            <strong>Debug:</strong> Docker input accepts: .tar, .tar.gz, .tgz, application/x-tar, application/gzip
+                            <br>
+                        </div>
+                        
+                        <button type="submit" id="dockerSubmitBtn">Deploy Container</button>
+                    </form>
+                </div>
+    
+                <div id="status" class="status-msg"></div>
+            </div>
+        </div>
+
+        <!-- View: Activity (History) -->
+        <div id="view-activity" class="view-section">
+            <div id="historySection">
+                <div class="card history-card">
+                    <div class="history-card-header">
+                        <h2 class="history-card-title">Activity Logs</h2>
+                        <div class="history-controls">
+                            <div class="history-filters" id="historyFilters" aria-label="History filters">
+                                <button type="button" class="pill active" data-history-filter="all">All</button>
+                                <button type="button" class="pill" data-history-filter="upload">Upload</button>
+                                <button type="button" class="pill" data-history-filter="delete">Delete</button>
+                                <button type="button" class="pill" data-history-filter="docker">Docker</button>
+                            </div>
+                            <input id="historySearch" class="history-search" type="search" placeholder="Search app or user…" autocomplete="off" />
+                            <div class="history-card-subtitle" id="historyMeta">Latest events</div>
+                        </div>
+                    </div>
+                    <div id="historyList" class="history-list">
+                        <div style="padding: 2rem; text-align: center; color: var(--text-muted)">No activity yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Admin -->
+        <div id="view-admin" class="view-section">
+            <div id="adminUsersSection">
+                <div class="card">
+                    <div style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
+                        <h2 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.3rem; font-weight: 800;">User Management</h2>
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">
+                            Manage developer and admin accounts (add, remove, or update).
+                        </p>
+                    </div>
+
+                    <div style="padding: 2rem;">
+                        <div id="adminUsersList" style="margin-bottom: 2rem; max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px;">
+                            <div style="padding: 1.5rem; font-size: 0.9rem; color: var(--text-muted); text-align: center;">
+                                Loading users...
+                            </div>
+                        </div>
+
+                        <form id="adminUserForm" style="display: flex; flex-direction: column; gap: 1rem; max-width: 500px;">
+                            <input type="hidden" id="adminUserOriginal" value="">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="adminUsername">Username</label>
+                                <input type="text" id="adminUsername" name="username" placeholder="e.g. dev-jane" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="adminPassword">Password</label>
+                                <input type="password" id="adminPassword" name="password" placeholder="Set or change password">
+                                <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Leave empty when editing to keep the current password.</small>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="adminRole">Role</label>
+                                <select id="adminRole" name="role">
+                                    <option value="developer">Developer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <button type="button" id="adminUserResetBtn" class="btn-ghost" style="padding: 0.7rem 1.2rem;">Clear</button>
+                                <button type="submit" id="adminUserSubmitBtn" class="btn-primary" style="flex: 1;">Create User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Settings -->
+        <div id="view-settings" class="view-section">
+            <div id="accountSection" class="card">
+                <div style="padding: 1.5rem;">
+                    <h2 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.3rem; font-weight: 800;">Account Settings</h2>
+                    <p style="margin-top: 0; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                        Update your own credentials below.
+                    </p>
+                    <form id="accountForm" style="display: flex; flex-direction: column; gap: 1rem; max-width: 500px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="accountUsername">New Username</label>
+                            <input type="text" id="accountUsername" name="username" placeholder="(optional)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="accountPassword">New Password</label>
+                            <input type="password" id="accountPassword" name="password" placeholder="(optional)">
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button type="button" id="accountResetBtn" class="btn-ghost" style="padding: 0.7rem 1.2rem;">Clear</button>
+                            <button type="submit" id="accountSaveBtn" class="btn-primary" style="flex: 1;">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=20250204-003"></script>
+</body>
+
+</html>
