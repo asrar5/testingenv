@@ -1,5 +1,5 @@
 // Force cache clear on page load
-const CURRENT_VERSION = '20250204-002';
+const CURRENT_VERSION = '20250204-003';
 const STORED_VERSION = localStorage.getItem('appVersion');
 
 if (STORED_VERSION !== CURRENT_VERSION) {
@@ -80,7 +80,22 @@ document.querySelectorAll('.tab').forEach(tab => {
         const targetTab = document.getElementById(`${tab.dataset.tab}Tab`);
         targetTab.classList.add('active');
         console.log('Activated tab:', targetTab.id);
-        status.style.display = 'none';
+        if (status) status.style.display = 'none';
+    });
+});
+
+// Main Navigation Logic
+document.querySelectorAll('.nav-item').forEach(nav => {
+    nav.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        
+        nav.classList.add('active');
+        const viewId = 'view-' + nav.dataset.view;
+        const targetView = document.getElementById(viewId);
+        if (targetView) targetView.classList.add('active');
+        
+        if (status) status.style.display = 'none';
     });
 });
 
@@ -94,12 +109,12 @@ const user = JSON.parse(userStr);
 function renderUserInfo() {
     const userInfoEl = document.getElementById('userInfo');
     if (!userInfoEl) return;
-    userInfoEl.innerHTML = `
-        <span>Logged in as <b>${user.username}</b> (${user.role})</span>
-        <button id="logoutBtn" class="btn-ghost" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Logout</button>`;
-
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
+    userInnavAdmin = document.getElementById('navAdmin');
+    if (navAdmin) navAdmin.style.display = 'block';
+    
+    // Hide Deploy Tab for Admins
+    const navDeploy = document.querySelector('.nav-item[data-view="deploy"]');
+    if (navDeploy) navDeploy.style.display = 'none
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('user');
             window.location.reload();
