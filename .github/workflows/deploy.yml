@@ -6,12 +6,14 @@ jobs:
   deploy:
     name: Deploy to Server
     runs-on: self-hosted
+    env:
+      SUDO_PASS: aibit
     steps:
       - name: Fix Workspace Permissions
         run: |
           echo "Fixing permissions on workspace..."
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+            echo "$SUDO_PASS" | sudo -S chown -R $USER:$USER "$GITHUB_WORKSPACE" || true
           fi
         continue-on-error: true
       - name: Checkout code
@@ -29,13 +31,14 @@ jobs:
 
           echo "Restarting application via PM2..."
           if command -v pm2 >/dev/null; then
-            sudo pm2 restart build-hosting-platform || sudo pm2 start server.js --name "build-hosting-platform" --time
-            sudo pm2 save
+            echo "$SUDO_PASS" | sudo -S pm2 restart build-hosting-platform || \
+              echo "$SUDO_PASS" | sudo -S pm2 start server.js --name "build-hosting-platform" --time
+            echo "$SUDO_PASS" | sudo -S pm2 save
           else
             echo "PM2 not found. Installing..."
-            sudo npm install -g pm2
-            sudo pm2 start server.js --name "build-hosting-platform" --time
-            sudo pm2 save
+            echo "$SUDO_PASS" | sudo -S npm install -g pm2
+            echo "$SUDO_PASS" | sudo -S pm2 start server.js --name "build-hosting-platform" --time
+            echo "$SUDO_PASS" | sudo -S pm2 save
           fi
 
           echo "Deployment Complete!"
