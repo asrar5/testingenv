@@ -406,7 +406,8 @@
                     const user = await res.json();
                     localStorage.setItem('user', JSON.stringify(user));
                     if (usernameInput?.value) localStorage.setItem('lastUsername', usernameInput.value);
-                    window.location.href = '/';
+                    // Go directly to the dashboard HTML to avoid any legacy /index.html redirects
+                    window.location.href = '/html/index.html';
                     return;
                 }
 
