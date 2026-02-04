@@ -32,6 +32,15 @@ const dockerSubmitBtn = document.getElementById('dockerSubmitBtn');
 const dockerDropZone = document.getElementById('dockerDropZone');
 const dockerFileInput = document.getElementById('dockerFileInput');
 const dockerFileName = document.getElementById('dockerFileName');
+const adminUsersSection = document.getElementById('adminUsersSection');
+const adminUsersListEl = document.getElementById('adminUsersList');
+const adminUserForm = document.getElementById('adminUserForm');
+const adminUserOriginalEl = document.getElementById('adminUserOriginal');
+const adminUsernameEl = document.getElementById('adminUsername');
+const adminPasswordEl = document.getElementById('adminPassword');
+const adminRoleEl = document.getElementById('adminRole');
+const adminUserResetBtn = document.getElementById('adminUserResetBtn');
+const adminUserSubmitBtn = document.getElementById('adminUserSubmitBtn');
 
 // Docker File Drag & Drop
 dockerDropZone.addEventListener('dragover', (e) => { e.preventDefault(); dockerDropZone.classList.add('dragover'); });
@@ -76,9 +85,11 @@ if (!userStr) {
 }
 const user = JSON.parse(userStr);
 
-// Hide upload form for Admin
+// Hide upload form for Admin and show admin sections
 if (user.role === 'admin') {
-    document.querySelector('.upload-card').style.display = 'none';
+    const uploadCard = document.querySelector('.upload-card');
+    if (uploadCard) uploadCard.style.display = 'none';
+    if (adminUsersSection) adminUsersSection.style.display = 'block';
 }
 
 document.getElementById('userInfo').innerHTML = `
@@ -309,6 +320,7 @@ let allDevelopers = [];
 let allHistory = [];
 let historyFilter = 'all';
 let historyQuery = '';
+let adminUsers = [];
 
 const historySearchEl = document.getElementById('historySearch');
 const historyFiltersEl = document.getElementById('historyFilters');
@@ -412,6 +424,7 @@ async function loadApps() {
 
         if (user.role === 'admin') {
             renderAdminView(allApps);
+            loadAdminUsers();
         } else {
             renderAppList(allApps);
         }
@@ -425,6 +438,157 @@ async function loadApps() {
             <pre style="text-align: left; background: #f1f5f9; padding: 1rem; overflow: auto; font-size: 0.8rem;">${err.stack}</pre>
         </div>`;
     }
+}
+
+// --- ADMIN USER MANAGEMENT ---
+
+async function loadAdminUsers() {
+    if (!adminUsersSection || user.role !== 'admin') return;
+    try {
+        if (adminUsersListEl) {
+            adminUsersListEl.innerHTML = '<div style="padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-muted);">Loading users...</div>';
+        }
+        const res = await fetchWithAuth('/api/admin/users');
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || 'Failed to load users');
+        }
+        const data = await res.json();
+        adminUsers = data.users || [];
+        renderAdminUsers();
+    } catch (e) {
+        console.error('Failed to load admin users:', e);
+        if (adminUsersListEl) {
+            adminUsersListEl.innerHTML = `<div style="padding: 0.75rem 1rem; font-size: 0.85rem; color: #b91c1c;">Failed to load users: ${e.message}</div>`;
+        }
+    }
+}
+
+function resetAdminUserForm() {
+    if (!adminUserForm) return;
+    adminUserForm.reset();
+    if (adminUserOriginalEl) adminUserOriginalEl.value = '';
+    if (adminUserSubmitBtn) adminUserSubmitBtn.textContent = 'Create User';
+}
+
+function renderAdminUsers() {
+    if (!adminUsersListEl) return;
+
+    if (!adminUsers || adminUsers.length === 0) {
+        adminUsersListEl.innerHTML = '<div style="padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-muted);">No users found. Create a new user below.</div>';
+        return;
+    }
+
+    adminUsersListEl.innerHTML = adminUsers.map(u => {
+        const isSelf = u.username === user.username;
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem;">
+                <div>
+                    <div style="font-weight: 600;">${u.username}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Role: ${u.role}</div>
+                </div>
+                <div style="display: flex; gap: 0.35rem;">
+                    <button type="button" class="btn-ghost" data-admin-user="${u.username}" data-action="edit" style="font-size: 0.7rem;">Edit</button>
+                    <button type="button" class="btn-danger" data-admin-user="${u.username}" data-action="delete" style="font-size: 0.7rem;" ${isSelf ? 'disabled title="Cannot delete current logged-in admin"' : ''}>Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+if (adminUsersListEl) {
+    adminUsersListEl.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-admin-user]');
+        if (!btn) return;
+        const username = btn.getAttribute('data-admin-user');
+        const action = btn.getAttribute('data-action');
+
+        if (action === 'edit') {
+            const userObj = adminUsers.find(u => u.username === username);
+            if (!userObj || !adminUsernameEl || !adminRoleEl || !adminUserOriginalEl || !adminUserSubmitBtn) return;
+            adminUsernameEl.value = userObj.username;
+            adminRoleEl.value = userObj.role;
+            adminPasswordEl && (adminPasswordEl.value = '');
+            adminUserOriginalEl.value = userObj.username;
+            adminUserSubmitBtn.textContent = 'Save Changes';
+        } else if (action === 'delete') {
+            if (!confirm(`Delete user "${username}"?`)) return;
+            try {
+                const res = await fetchWithAuth(`/api/admin/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+                const body = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(body.error || 'Failed to delete user');
+                }
+                await loadAdminUsers();
+            } catch (err) {
+                alert('Failed to delete user: ' + err.message);
+            }
+        }
+    });
+}
+
+if (adminUserForm && adminUserSubmitBtn) {
+    adminUserForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = adminUsernameEl ? adminUsernameEl.value.trim() : '';
+        const password = adminPasswordEl ? adminPasswordEl.value : '';
+        const role = adminRoleEl ? adminRoleEl.value : 'developer';
+        const original = adminUserOriginalEl ? adminUserOriginalEl.value : '';
+
+        if (!username) {
+            alert('Username is required');
+            return;
+        }
+
+        adminUserSubmitBtn.disabled = true;
+        const originalLabel = adminUserSubmitBtn.textContent;
+        adminUserSubmitBtn.textContent = 'Saving...';
+
+        try {
+            let res;
+            if (!original) {
+                // Create new user
+                if (!password) {
+                    alert('Password is required for new users');
+                    adminUserSubmitBtn.disabled = false;
+                    adminUserSubmitBtn.textContent = originalLabel;
+                    return;
+                }
+                res = await fetchWithAuth('/api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, role })
+                });
+            } else {
+                // Update existing user
+                const payload = { newUsername: username, role };
+                if (password) payload.password = password;
+                res = await fetchWithAuth(`/api/admin/users/${encodeURIComponent(original)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(body.error || 'Failed to save user');
+            }
+            resetAdminUserForm();
+            await loadAdminUsers();
+        } catch (err) {
+            alert('Failed to save user: ' + err.message);
+        } finally {
+            adminUserSubmitBtn.disabled = false;
+            adminUserSubmitBtn.textContent = originalLabel;
+        }
+    });
+}
+
+if (adminUserResetBtn) {
+    adminUserResetBtn.addEventListener('click', () => {
+        resetAdminUserForm();
+    });
 }
 
 function renderAdminView(apps) {

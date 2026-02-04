@@ -146,6 +146,45 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="adminUsersSection" style="display: none; margin-top: 1.5rem;">
+                        <div class="card">
+                            <h2 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; font-weight: 700;">Admin &mdash; User Management</h2>
+                            <p style="margin-top: 0; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                                Manage developer and admin accounts (add, remove, or update password/role).
+                            </p>
+
+                            <div id="adminUsersList" style="margin-bottom: 1rem; max-height: 220px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px;">
+                                <div style="padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                                    Loading users...
+                                </div>
+                            </div>
+
+                            <form id="adminUserForm" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <input type="hidden" id="adminUserOriginal" value="">
+                                <div class="form-group" style="margin-bottom: 0.3rem;">
+                                    <label for="adminUsername" style="font-size: 0.8rem;">Username</label>
+                                    <input type="text" id="adminUsername" name="username" placeholder="e.g. dev-jane" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0.3rem;">
+                                    <label for="adminPassword" style="font-size: 0.8rem;">Password</label>
+                                    <input type="password" id="adminPassword" name="password" placeholder="Set or change password">
+                                    <small style="font-size: 0.7rem; color: var(--text-muted);">Leave empty when editing to keep the current password.</small>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0.3rem;">
+                                    <label for="adminRole" style="font-size: 0.8rem;">Role</label>
+                                    <select id="adminRole" name="role">
+                                        <option value="developer">Developer</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem;">
+                                    <button type="button" id="adminUserResetBtn" class="btn-ghost" style="font-size: 0.75rem;">Clear</button>
+                                    <button type="submit" id="adminUserSubmitBtn" class="btn-primary" style="font-size: 0.8rem;">Create User</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </aside>
             </div>
         </div>
