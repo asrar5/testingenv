@@ -425,6 +425,8 @@ function updateStats(apps, system) {
     if (system && user.role === 'admin') {
         const memPct = typeof system.memUsagePercent === 'number' ? Math.round(system.memUsagePercent) : null;
         const memLabel = `${formatGb(system.usedMem)} / ${formatGb(system.totalMem)}`;
+        const hasLoad = typeof system.load1 === 'number' && typeof system.cpuCount === 'number' && system.cpuCount > 0;
+        const cpuPct = hasLoad ? Math.round((system.load1 / system.cpuCount) * 100) : null;
         const load1 = typeof system.load1 === 'number' ? system.load1.toFixed(2) : 'n/a';
         const cpuLabel = system.cpuCount ? `${system.cpuCount} cores` : 'n/a';
 
@@ -435,9 +437,9 @@ function updateStats(apps, system) {
             <div class="stat-hint">${memLabel}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">CPU Load (1m)</div>
-            <div class="stat-value">${load1}</div>
-            <div class="stat-hint">${cpuLabel}</div>
+            <div class="stat-label">CPU Usage (1m)</div>
+            <div class="stat-value">${cpuPct !== null ? cpuPct + '%': 'n/a'}</div>
+            <div class="stat-hint">Load 1m: ${load1} • ${cpuLabel}</div>
         </div>`;
     }
 
