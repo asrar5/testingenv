@@ -109,16 +109,30 @@ const user = JSON.parse(userStr);
 function renderUserInfo() {
     const userInfoEl = document.getElementById('userInfo');
     if (!userInfoEl) return;
-    userInnavAdmin = document.getElementById('navAdmin');
-    if (navAdmin) navAdmin.style.display = 'block';
-    
-    // Hide Deploy Tab for Admins
-    const navDeploy = document.querySelector('.nav-item[data-view="deploy"]');
-    if (navDeploy) navDeploy.style.display = 'none
+
+    // Populate user info
+    userInfoEl.innerHTML = `
+        <b>${user.username}</b>
+        <span style="color: var(--text-muted); font-size: 0.85em;">${user.role}</span>
+        <button id="logoutBtn" class="btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-left: 0.5rem; color: var(--danger);">Logout</button>
+    `;
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('user');
             window.location.reload();
         });
+    }
+
+    // Role-based UI updates
+    const navAdmin = document.getElementById('navAdmin');
+    if (user.role === 'admin') {
+        if (navAdmin) navAdmin.style.display = 'block';
+        
+        // Hide Deploy Tab for Admins
+        const navDeploy = document.querySelector('.nav-item[data-view="deploy"]');
+        if (navDeploy) navDeploy.style.display = 'none';
     }
 }
 
