@@ -1,5 +1,5 @@
 // Force cache clear on page load
-const CURRENT_VERSION = '20250122-001';
+const CURRENT_VERSION = '20250204-002';
 const STORED_VERSION = localStorage.getItem('appVersion');
 
 if (STORED_VERSION !== CURRENT_VERSION) {

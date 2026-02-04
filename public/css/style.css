@@ -237,6 +237,7 @@ label {
 }
 
 input[type="text"],
+input[type="password"],
 select {
     width: 100%;
     padding: 0.85rem 1rem;
