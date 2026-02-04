@@ -22,17 +22,23 @@ jobs:
       - name: Deploy Locally
         run: |
           echo "Deploying on self-hosted runner (Local)..."
-          
-          echo "Installing dependencies..."
+
+          # Use the checked-out workspace as the live app directory
+          APP_DIR="$GITHUB_WORKSPACE"
+          echo "App directory: $APP_DIR"
+          cd "$APP_DIR"
+
+          echo "Installing dependencies in app directory..."
           npm install --production
 
           echo "Creating required directories..."
           mkdir -p uploads builds data
 
-          echo "Restarting application via PM2..."
+          echo "Restarting application via PM2 from app directory..."
           if command -v pm2 >/dev/null; then
-            echo "$SUDO_PASS" | sudo -S pm2 restart build-hosting-platform || \
-              echo "$SUDO_PASS" | sudo -S pm2 start server.js --name "build-hosting-platform" --time
+            # Always replace the process so it points at the current APP_DIR
+            echo "$SUDO_PASS" | sudo -S pm2 delete build-hosting-platform || true
+            echo "$SUDO_PASS" | sudo -S pm2 start server.js --name "build-hosting-platform" --time
             echo "$SUDO_PASS" | sudo -S pm2 save
           else
             echo "PM2 not found. Installing..."
