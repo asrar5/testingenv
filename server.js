@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const os = require('os');
 require('dotenv').config();
 const { exec } = require('child_process');
 const util = require('util');
@@ -169,11 +170,34 @@ app.delete('/api/admin/users/:username', requireAuth, requireAdmin, async (req, 
     }
 });
 
+function getSystemStats() {
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const memUsagePercent = totalMem ? (usedMem / totalMem) * 100 : 0;
+    const [load1, load5, load15] = os.loadavg();
+    const cpuCount = os.cpus().length;
+    const uptimeSeconds = os.uptime();
+
+    return {
+        cpuCount,
+        load1,
+        load5,
+        load15,
+        totalMem,
+        freeMem,
+        usedMem,
+        memUsagePercent,
+        uptimeSeconds
+    };
+}
+
 // Check system status (Protected - Role based filtering)
 app.get('/api/status', requireAuth, async (req, res) => {
     try {
         const allApps = await PortManager.getAllAllocations();
         const history = await HistoryManager.getHistory();
+        const system = getSystemStats();
 
         if (req.user.role === 'admin') {
             const developers = Auth.getAllDevelopers();
@@ -192,7 +216,7 @@ app.get('/api/status', requireAuth, async (req, res) => {
                 }
             }
 
-            res.json({ status: 'ok', apps: allApps, developers, history });
+            res.json({ status: 'ok', apps: allApps, developers, history, system });
         } else {
             // Filter apps and history for developer
             const myApps = {};
@@ -216,7 +240,7 @@ app.get('/api/status', requireAuth, async (req, res) => {
             }
 
             const myHistory = history.filter(h => h.owner === req.user.username);
-            res.json({ status: 'ok', apps: myApps, history: myHistory });
+            res.json({ status: 'ok', apps: myApps, history: myHistory, system });
         }
     } catch (error) {
         res.status(500).json({ error: error.message });

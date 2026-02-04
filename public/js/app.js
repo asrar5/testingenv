@@ -373,7 +373,12 @@ const historySearchEl = document.getElementById('historySearch');
 const historyFiltersEl = document.getElementById('historyFilters');
 const statsRowEl = document.getElementById('statsRow');
 
-function updateStats(apps) {
+function formatGb(bytes) {
+    if (!bytes || bytes <= 0) return '0.0 GB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+}
+
+function updateStats(apps, system) {
     if (!statsRowEl) return;
 
     const entries = Object.entries(apps || {});
@@ -394,7 +399,7 @@ function updateStats(apps) {
         if (status === 'stopped') stopped += 1;
     }
 
-    statsRowEl.innerHTML = `
+    let html = `
         <div class="stat-card">
             <div class="stat-label">Total Apps</div>
             <div class="stat-value">${total}</div>
@@ -416,6 +421,27 @@ function updateStats(apps) {
             <div class="stat-hint">Docker status</div>
         </div>
     `;
+
+    if (system && user.role === 'admin') {
+        const memPct = typeof system.memUsagePercent === 'number' ? Math.round(system.memUsagePercent) : null;
+        const memLabel = `${formatGb(system.usedMem)} / ${formatGb(system.totalMem)}`;
+        const load1 = typeof system.load1 === 'number' ? system.load1.toFixed(2) : 'n/a';
+        const cpuLabel = system.cpuCount ? `${system.cpuCount} cores` : 'n/a';
+
+        html += `
+        <div class="stat-card">
+            <div class="stat-label">Memory Usage</div>
+            <div class="stat-value">${memPct !== null ? memPct + '%': 'n/a'}</div>
+            <div class="stat-hint">${memLabel}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">CPU Load (1m)</div>
+            <div class="stat-value">${load1}</div>
+            <div class="stat-hint">${cpuLabel}</div>
+        </div>`;
+    }
+
+    statsRowEl.innerHTML = html;
 
     statsRowEl.style.display = 'grid';
 }
@@ -467,7 +493,7 @@ async function loadApps() {
         allDevelopers = data.developers || [];
         allHistory = data.history || [];
 
-        updateStats(allApps);
+        updateStats(allApps, data.system || null);
 
         if (user.role === 'admin') {
             renderAdminView(allApps);
