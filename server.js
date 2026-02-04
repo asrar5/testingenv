@@ -97,6 +97,60 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Admin-only middleware
+const requireAdmin = (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+};
+
+// Admin user management APIs
+app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const users = await Auth.getAllUsers();
+        res.json({ users });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+    const { username, password, role } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+    try {
+        await Auth.createUser(username, password, role || 'developer');
+        res.status(201).json({ success: true });
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+app.patch('/api/admin/users/:username', requireAuth, requireAdmin, async (req, res) => {
+    const { username } = req.params;
+    const { newUsername, password, role } = req.body;
+    try {
+        await Auth.updateUser(username, { newUsername, password, role });
+        res.json({ success: true });
+    } catch (e) {
+        const status = e.message === 'User not found' || e.message === 'New username already exists' ? 400 : 500;
+        res.status(status).json({ error: e.message });
+    }
+});
+
+app.delete('/api/admin/users/:username', requireAuth, requireAdmin, async (req, res) => {
+    const { username } = req.params;
+    try {
+        await Auth.deleteUser(username);
+        res.json({ success: true });
+    } catch (e) {
+        const status = e.message === 'User not found' || e.message === 'Cannot delete the last admin user' ? 400 : 500;
+        res.status(status).json({ error: e.message });
+    }
+});
+
 // Check system status (Protected - Role based filtering)
 app.get('/api/status', requireAuth, async (req, res) => {
     try {
