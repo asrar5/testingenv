@@ -97,6 +97,24 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Self-service credential update for logged-in user
+app.patch('/api/me', requireAuth, async (req, res) => {
+    const currentUsername = req.user.username;
+    const { newUsername, password } = req.body || {};
+
+    // Prevent role escalation; always keep existing role
+    const role = req.user.role;
+
+    try {
+        await Auth.updateUser(currentUsername, { newUsername, password, role });
+        const updatedUsername = newUsername && newUsername.trim().length > 0 ? newUsername : currentUsername;
+        res.json({ username: updatedUsername, role });
+    } catch (e) {
+        const status = e.message === 'User not found' || e.message === 'New username already exists' ? 400 : 500;
+        res.status(status).json({ error: e.message });
+    }
+});
+
 // Admin-only middleware
 const requireAdmin = (req, res, next) => {
     if (!req.user || req.user.role !== 'admin') {

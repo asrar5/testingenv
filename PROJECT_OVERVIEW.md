@@ -66,6 +66,13 @@ In short, it gives you a **single place to upload, host, and manage many test ap
   - `DELETE /api/admin/users/:username` – remove a user (with a safety check that prevents deleting the last admin).
 - All these endpoints are protected by the same header‑based auth (`x-user`) and require the caller’s role to be **admin**.
 
+#### 4.1.2 Self‑Service Credential Updates (Developers/Admins)
+
+- Any logged‑in user (developer or admin) can update their **own** credentials from the dashboard:
+  - The "Account Settings" card lets them enter a new username and/or new password.
+  - Submitting the form calls `PATCH /api/me`, which updates only that account while preserving the existing role.
+- On success, the frontend updates the stored `user` object in `localStorage` and refreshes the header so the new username is reflected immediately.
+
 ### 4.2 Uploading and Deploying ZIP Builds
 
 1. A logged‑in developer opens the dashboard (`/`).
@@ -128,6 +135,7 @@ There are two ways to deploy Docker apps from the dashboard (in the **Docker** t
 - The frontend renders:
   - App cards with status, owner, and port.
   - A history list of deploy/delete events.
+  - For **admins**, an additional "User Management" panel in the sidebar that lists all users and lets the admin add new users, edit usernames/roles/passwords, and remove users (backed by the `/api/admin/users` endpoints).
 
 ### 4.6 CI/CD and Runtime
 

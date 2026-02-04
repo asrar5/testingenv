@@ -41,6 +41,12 @@ const adminPasswordEl = document.getElementById('adminPassword');
 const adminRoleEl = document.getElementById('adminRole');
 const adminUserResetBtn = document.getElementById('adminUserResetBtn');
 const adminUserSubmitBtn = document.getElementById('adminUserSubmitBtn');
+const accountSection = document.getElementById('accountSection');
+const accountForm = document.getElementById('accountForm');
+const accountUsernameEl = document.getElementById('accountUsername');
+const accountPasswordEl = document.getElementById('accountPassword');
+const accountResetBtn = document.getElementById('accountResetBtn');
+const accountSaveBtn = document.getElementById('accountSaveBtn');
 
 // Docker File Drag & Drop
 dockerDropZone.addEventListener('dragover', (e) => { e.preventDefault(); dockerDropZone.classList.add('dragover'); });
@@ -85,21 +91,33 @@ if (!userStr) {
 }
 const user = JSON.parse(userStr);
 
-// Hide upload form for Admin and show admin sections
+function renderUserInfo() {
+    const userInfoEl = document.getElementById('userInfo');
+    if (!userInfoEl) return;
+    userInfoEl.innerHTML = `
+        <span>Logged in as <b>${user.username}</b> (${user.role})</span>
+        <button id="logoutBtn" class="btn-ghost" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Logout</button>`;
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.reload();
+        });
+    }
+}
+
+// Initial UI wiring based on role
 if (user.role === 'admin') {
     const uploadCard = document.querySelector('.upload-card');
     if (uploadCard) uploadCard.style.display = 'none';
     if (adminUsersSection) adminUsersSection.style.display = 'block';
 }
+if (accountSection) {
+    accountSection.style.display = 'block';
+}
 
-document.getElementById('userInfo').innerHTML = `
-    <span>Logged in as <b>${user.username}</b></span>
-    <button id="logoutBtn" class="btn-ghost" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Logout</button>`;
-
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('user');
-    window.location.reload();
-});
+renderUserInfo();
 
 async function fetchWithAuth(url, options = {}) {
     options.headers = {
@@ -438,6 +456,70 @@ async function loadApps() {
             <pre style="text-align: left; background: #f1f5f9; padding: 1rem; overflow: auto; font-size: 0.8rem;">${err.stack}</pre>
         </div>`;
     }
+}
+
+// --- SELF-SERVICE ACCOUNT SETTINGS ---
+
+function resetAccountForm() {
+    if (!accountForm) return;
+    if (accountUsernameEl) accountUsernameEl.value = '';
+    if (accountPasswordEl) accountPasswordEl.value = '';
+}
+
+if (accountForm && accountSaveBtn) {
+    accountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newUsername = accountUsernameEl ? accountUsernameEl.value.trim() : '';
+        const password = accountPasswordEl ? accountPasswordEl.value : '';
+
+        if (!newUsername && !password) {
+            alert('Enter at least a new username or a new password.');
+            return;
+        }
+
+        accountSaveBtn.disabled = true;
+        const originalLabel = accountSaveBtn.textContent;
+        accountSaveBtn.textContent = 'Saving...';
+
+        try {
+            const body = {};
+            if (newUsername) body.newUsername = newUsername;
+            if (password) body.password = password;
+
+            const res = await fetchWithAuth('/api/me', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to update account');
+            }
+
+            // Update in-memory user and localStorage
+            if (data.username) {
+                user.username = data.username;
+            }
+            if (data.role) {
+                user.role = data.role;
+            }
+            localStorage.setItem('user', JSON.stringify(user));
+            renderUserInfo();
+            resetAccountForm();
+            alert('Account updated successfully.');
+        } catch (err) {
+            alert('Failed to update account: ' + err.message);
+        } finally {
+            accountSaveBtn.disabled = false;
+            accountSaveBtn.textContent = originalLabel;
+        }
+    });
+}
+
+if (accountResetBtn) {
+    accountResetBtn.addEventListener('click', () => {
+        resetAccountForm();
+    });
 }
 
 // --- ADMIN USER MANAGEMENT ---
