@@ -783,6 +783,14 @@ function renderAppListHtml(apps) {
         const type = info.type || 'zip';
         const status = info.status || (type === 'zip' ? 'running' : 'unknown');
         const category = info.category || 'frontend';
+        const resources = info.resources || null;
+
+        const resourcesHtml = (type === 'docker' && resources) ? `
+                            <div style="margin-top: 0.25rem; font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                <span>CPU: <b>${resources.cpu || 'n/a'}</b></span>
+                                <span>RAM: <b>${resources.mem || 'n/a'}</b></span>
+                            </div>
+                        ` : '';
 
         return `
                     <div class="app-item" id="app-${name}">
@@ -797,6 +805,7 @@ function renderAppListHtml(apps) {
                                 <span>Type: <b>${type.toUpperCase()}</b></span>
                                 <span>Owner: <b>${owner}</b></span>
                             </div>
+                            ${resourcesHtml}
                         </div>
                         <div class="app-actions">
                             <a href="http://${window.location.hostname}:${port}/" target="_blank" class="app-link" style="text-decoration: none;">

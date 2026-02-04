@@ -180,10 +180,16 @@ app.get('/api/status', requireAuth, async (req, res) => {
             // Get statuses for all docker apps
             const dockerApps = Object.entries(allApps).filter(([_, data]) => (typeof data === 'object' && data.type === 'docker')).map(([name, _]) => name);
             const statuses = await Deployer.getContainerStatuses(dockerApps);
+            const resources = await Deployer.getContainerResourceStats(dockerApps);
 
-            // Enrich app data with status
+            // Enrich app data with status and resource stats
             for (const name of dockerApps) {
-                if (allApps[name]) allApps[name].status = statuses[name];
+                if (allApps[name]) {
+                    allApps[name].status = statuses[name];
+                    if (resources[name]) {
+                        allApps[name].resources = resources[name];
+                    }
+                }
             }
 
             res.json({ status: 'ok', apps: allApps, developers, history });
@@ -199,8 +205,14 @@ app.get('/api/status', requireAuth, async (req, res) => {
             }
 
             const statuses = await Deployer.getContainerStatuses(myDockerApps);
+            const resources = await Deployer.getContainerResourceStats(myDockerApps);
             for (const name of myDockerApps) {
-                if (myApps[name]) myApps[name].status = statuses[name];
+                if (myApps[name]) {
+                    myApps[name].status = statuses[name];
+                    if (resources[name]) {
+                        myApps[name].resources = resources[name];
+                    }
+                }
             }
 
             const myHistory = history.filter(h => h.owner === req.user.username);
