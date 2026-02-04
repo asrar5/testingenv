@@ -31,10 +31,15 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
 }));
 
+// Serve main UI from html folder
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'));
+});
+
 // Debug endpoint to check file content
 app.get('/api/debug/check-docker-input', (req, res) => {
     const fs = require('fs');
-    const indexPath = path.join(__dirname, 'public', 'index.html');
+    const indexPath = path.join(__dirname, 'public', 'html', 'index.html');
     const content = fs.readFileSync(indexPath, 'utf8');
     
     // Check for Docker-related strings

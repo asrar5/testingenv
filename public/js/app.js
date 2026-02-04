@@ -72,7 +72,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 // Auth Check
 const userStr = localStorage.getItem('user');
 if (!userStr) {
-    window.location.href = '/login.html';
+    window.location.href = '/html/login.html';
 }
 const user = JSON.parse(userStr);
 
@@ -96,10 +96,10 @@ async function fetchWithAuth(url, options = {}) {
         'x-user': JSON.stringify(user)
     };
     const res = await fetch(url, options);
-    if (res.status === 401) {
-        localStorage.removeItem('user');
-        window.location.href = '/login.html';
-    }
+            if (res.status === 401) {
+                localStorage.removeItem('user');
+                window.location.href = '/html/login.html';
+            }
     return res;
 }
 
