@@ -36,6 +36,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'));
 });
 
+// Backwards-compatible login path
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'html', 'login.html'));
+});
+
 // Debug endpoint to check file content
 app.get('/api/debug/check-docker-input', (req, res) => {
     const fs = require('fs');
